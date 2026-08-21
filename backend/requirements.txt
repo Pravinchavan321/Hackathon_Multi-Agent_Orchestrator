@@ -9,3 +9,5 @@ structlog
 python-dotenv
 langchain-google-genai
 langchain
+langgraph
+langgraph-checkpoint-mongodb

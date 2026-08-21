@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     CHROMA_PORT: int = 8000
     AI_PROVIDER: str = "google"
     AI_API_KEY: str = ""
-    AI_MODEL: str = "gemini-2.5-flash"
+    AI_MODEL: str = "gemini-flash-latest"
     AI_ENABLED: bool = True
     LOG_LEVEL: str = "INFO"
     APP_ENV: str = "development"
