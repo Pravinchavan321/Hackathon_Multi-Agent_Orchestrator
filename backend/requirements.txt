@@ -7,3 +7,5 @@ chromadb
 pydantic-settings
 structlog
 python-dotenv
+langchain-google-genai
+langchain
