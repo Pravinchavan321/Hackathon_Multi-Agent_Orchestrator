@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+motor
+beanie
+redis
+chromadb
+pydantic-settings
+structlog
+python-dotenv

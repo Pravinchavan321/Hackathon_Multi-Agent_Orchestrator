@@ -1,0 +1,29 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: hackathon-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7
+    container_name: hackathon-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  chromadb:
+    image: chromadb/chroma
+    container_name: hackathon-chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+volumes:
+  mongo_data:
+  redis_data:
+  chroma_data:
