@@ -4,28 +4,25 @@
 > The "In progress" section is what a new session should read FIRST.
 
 ## Last updated
-2026-08-21 — initial scaffold created, no code written yet.
+2026-08-21 — Phase 1 complete (Infra, FastAPI, and React skeletons connected).
 
 ## Last verified working state
-Nothing runs yet. This is a fresh scaffold.
+Backend running on 8080, frontend running on 5173. Frontend successfully fetches and displays `{"status": "ok"}` from `/api/health`.
 
 ---
 
 ## ✅ Done
-- [ ] (nothing yet — check items as you complete them)
+- [x] Docker compose (mongo/redis/chroma)
+- [x] FastAPI skeleton + /api/health (running on 8080 due to ChromaDB conflict on 8000)
+- [x] React skeleton fetching /api/health
 
 ## 🚧 In progress (READ THIS BEFORE CONTINUING)
-- Task: Phase 1 infrastructure skeleton (see PROJECT_CONTEXT.md scope)
+- Task: Phase 2 - Single raw LLM call via /api/ai/ping
 - Blocker: none yet
 - Last error seen: n/a
-- Next concrete step: `docker compose up -d`, then confirm all 3
-  containers (mongo, redis, chromadb) are healthy before writing any
-  Python.
+- Next concrete step: Await Phase 2 prompt from user to implement the ping endpoint.
 
 ## ⬜ Not started
-- [ ] Docker compose (mongo/redis/chroma)
-- [ ] FastAPI skeleton + /api/health
-- [ ] React skeleton fetching /api/health
 - [ ] Single raw LLM call via /api/ai/ping (no graph yet)
 - [ ] 2-node LangGraph with Mongo checkpointing (prove persistence works)
 - [ ] WebSocket streaming on the 2-node graph
@@ -49,19 +46,21 @@ what proves state to a new session, not just checked boxes.)
 ### Checkpoint 1: Infra up
 ```
 $ docker compose ps
-[paste output here]
+NAME               IMAGE             COMMAND                  SERVICE    CREATED         STATUS         PORTS
+hackathon-chroma   chromadb/chroma   "dumb-init -- chroma…"   chromadb   15 minutes ago   Up 15 minutes   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+hackathon-mongo    mongo:7           "docker-entrypoint.s…"   mongo      15 minutes ago   Up 15 minutes   0.0.0.0:27017->27017/tcp, [::]:27017->27017/tcp
+hackathon-redis    redis:7           "docker-entrypoint.s…"   redis      15 minutes ago   Up 15 minutes   0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
 ```
 
 ### Checkpoint 2: FastAPI health
 ```
 $ curl localhost:8080/api/health
-[paste output here]
+{"status":"ok"}
 ```
 
 ### Checkpoint 3: Mongo checkpoint persistence
 ```
 [paste the two graph calls + proof state persisted across them]
 ```
-
 
 **Note:** FastAPI runs on port 8080 locally due to a port conflict with ChromaDB on port 8000.
