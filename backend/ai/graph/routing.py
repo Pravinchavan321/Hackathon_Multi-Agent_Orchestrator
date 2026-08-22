@@ -3,6 +3,7 @@ LangGraph Conditional Routing Logic.
 """
 
 from backend.ai.graph.state import HackathonAgentState
+from backend.core.logging import log
 
 
 def route_to_agent(state: HackathonAgentState) -> str:
@@ -10,7 +11,9 @@ def route_to_agent(state: HackathonAgentState) -> str:
     Conditional edge router:
     Directs flow from orchestrator to specialist node based on state["task_type"].
     """
-    return state.get("task_type", "submission")
+    target = state.get("task_type", "submission")
+    log.info("Conditional edge routing from orchestrator", router="route_to_agent", target_node=target)
+    return target
 
 
 def needs_approval(state: HackathonAgentState) -> str:
@@ -18,6 +21,10 @@ def needs_approval(state: HackathonAgentState) -> str:
     Conditional edge router for risk_agent:
     Checks if a high-risk finding requires human approval gate.
     """
-    return "approval_required" if state.get("requires_human_approval") else "auto_complete"
+    requires = state.get("requires_human_approval", False)
+    target = "approval_required" if requires else "auto_complete"
+    log.info("Conditional edge routing from risk_agent", router="needs_approval", requires_approval=requires, target_branch=target)
+    return target
+
 
 

@@ -4,10 +4,10 @@
 > The "In progress" section is what a new session should read FIRST.
 
 ## Last updated
-2026-08-22 — Phase 7 complete (Human-in-the-loop interrupt gate with LangGraph `interrupt_before=["human_approval"]`, `needs_approval` conditional edge, `GET /api/ai/tasks/{thread_id}/pending`, and `POST /api/ai/tasks/{thread_id}/approve` approve/reject workflows verified).
+2026-08-22 — Phase 8 complete (LangSmith tracing configuration verified with project `hackathon-orchestrator`; structlog coverage closed with request correlation middleware `request_id` and `thread_id` contextvars across all nodes, tools, routers, and handlers).
 
 ## Last verified working state
-LangGraph StateGraph with conditional specialist routing, ChromaDB semantic vector search, and native human-in-the-loop interrupt gate before `human_approval_node`. High-risk flags pause execution at the gate; approve resumes execution via `ainvoke(None)` and reject terminates cleanly via `aupdate_state()`. All 6 checks in `test_human_approval.py`, plus full regression suites `test_graph_checkpoint.py`, `test_routing.py` (4/4 passed), and `test_semantic_search.py` passed with 100% success.
+LangGraph StateGraph with conditional specialist routing, ChromaDB semantic vector search, native human-in-the-loop interrupt gate before `human_approval_node`, and end-to-end structured logging with correlation IDs (`request_id`, `thread_id`, `node`, `tool`). All tests passed with 100% success.
 
 ---
 
@@ -24,16 +24,17 @@ LangGraph StateGraph with conditional specialist routing, ChromaDB semantic vect
 - [x] Phase 6: Specialist agents integrated with semantic vector retrieval (`novelty_assessment`, `similar_submissions`, `matched_participants`)
 - [x] Phase 7: Human-in-the-loop interrupt on destructive risk action (`interrupt_before=["human_approval"]`, `needs_approval` conditional edge)
 - [x] Phase 7: Approval and rejection REST endpoints (`GET /api/ai/tasks/{thread_id}/pending`, `POST /api/ai/tasks/{thread_id}/approve`)
+- [x] Phase 8: LangSmith tracing configured (`LANGCHAIN_PROJECT=hackathon-orchestrator`) and exported to environment
+- [x] Phase 8: structlog coverage completed (request correlation middleware `request_id`, `thread_id` contextvars, tool call entry/exit, router query/decision logs)
 
 ## 🚧 In progress (READ THIS BEFORE CONTINUING)
-- Phase 8: LangSmith tracing & structlog observability polish
+- Phase 9: Frontend components + live AIActivityTimeline demo polish
 
 ## ⬜ Not started
-- [ ] LangSmith tracing enabled
-- [ ] structlog wired into all agent nodes
 - [ ] Frontend: AIOrchestrator input + live AIActivityTimeline
 - [ ] Architecture diagram exported (1 page)
 - [ ] Failure log written (ongoing — add entries as things break)
+
 
 
 
@@ -356,9 +357,25 @@ $ python -m backend.tests.test_human_approval
   `{"timestamp": "2026-08-22T05:35:29.581931Z", "event": "Task graph successfully resumed after human approval", "level": "info"}`
 
 
+### Checkpoint 8: LangSmith Tracing & structlog Observability (Phase 8)
+```
+- LangSmith Tracing: Configured with project 'hackathon-orchestrator' and exported to os.environ. When LANGCHAIN_API_KEY is supplied, LangChain/LangGraph will stream traces directly to the LangSmith project.
+- Request Correlation Middleware: FastAPI http middleware binds UUID 'request_id' to structlog contextvars and sets 'X-Request-ID' header.
+- Thread Correlation: REST router binds 'thread_id' to structlog contextvars; agent nodes log node name, task_type_in, and thread_id.
+- Tool Telemetry: find_similar_submissions and find_matching_participants log query length, requested n_results, returned matches count, and top match.
+```
+
+#### Phase 8 structlog Gaps Audit & Changelog:
+1. **Request Correlation ID:** Added FastAPI `@app.middleware("http")` in `main.py` binding `request_id=req-<uuid>` so pre-graph logs and validation failures are correlated.
+2. **Thread ID Propagation:** Bound `thread_id` to contextvars in `/orchestrate`, `/tasks/{thread_id}/pending`, `/tasks/{thread_id}/approve`, and `/ws/ai/tasks/{thread_id}`.
+3. **Agent Node Logging:** Added `node`, `thread_id`, `task_type_in`, and `current_messages` to entry and exit logs in `orchestrator_agent.py`, `submission_agent.py`, `risk_agent.py`, `team_agent.py`, and `human_approval_node.py`.
+4. **Tool Call Logging:** Added explicit `Tool called: <tool_name>` with `query_length` and `n_results`, and `Tool completed: <tool_name>` with `matches_count` and `top_match` in `submission_tools.py` and `team_tools.py`.
+5. **Conditional Edge Routing Logging:** Added router event logs in `route_to_agent` and `needs_approval` in `routing.py`.
+
 ---
 
 ## Failure log
+
 
 
 

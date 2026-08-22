@@ -59,11 +59,17 @@ def find_similar_submissions(description: str, n_results: int = 5) -> list[dict]
         - distance (float): Vector space cosine/L2 distance
         - description (str): Summary description of the existing submission
     """
+    log.info(
+        "Tool called: find_similar_submissions",
+        tool="find_similar_submissions",
+        query_length=len(description),
+        n_results=n_results,
+    )
     try:
         submissions_col, _ = get_or_create_collections()
         count = submissions_col.count()
         if count == 0:
-            log.info("No submissions currently indexed in ChromaDB.")
+            log.info("No submissions currently indexed in ChromaDB", tool="find_similar_submissions")
             return []
 
         actual_k = min(n_results, count)
@@ -98,9 +104,16 @@ def find_similar_submissions(description: str, n_results: int = 5) -> list[dict]
 
         # Sort descending by similarity score
         similar_items.sort(key=lambda x: x["similarity_score"], reverse=True)
-        log.info("Found similar submissions", query_len=len(description), matches_count=len(similar_items))
+        log.info(
+            "Tool completed: find_similar_submissions",
+            tool="find_similar_submissions",
+            query_len=len(description),
+            matches_count=len(similar_items),
+            top_match=similar_items[0]["title"] if similar_items else None,
+        )
         return similar_items
 
     except Exception as e:
-        log.error("Failed to query similar submissions", error=str(e))
+        log.error("Failed to query similar submissions", tool="find_similar_submissions", error=str(e))
         return []
+

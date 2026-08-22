@@ -46,7 +46,14 @@ async def submission_agent_node(state: HackathonAgentState, config: RunnableConf
     3. Prompts the LLM with structured output to evaluate the submission and produce novelty assessment.
     4. Updates state with structured final_result and tool_results.
     """
-    log.info("Submission agent node entered", current_messages=len(state.get("messages", [])))
+    thread_id = (config or {}).get("configurable", {}).get("thread_id", "")
+    log.info(
+        "Submission agent node entered",
+        node="submission_agent",
+        thread_id=thread_id,
+        current_messages=len(state.get("messages", [])),
+        task_type_in=state.get("task_type"),
+    )
 
     messages = state.get("messages", [])
     user_content = ""
@@ -68,7 +75,7 @@ async def submission_agent_node(state: HackathonAgentState, config: RunnableConf
             "n_results": 3,
         })
     except Exception as e:
-        log.error("Tool execution find_similar_submissions failed", error=str(e))
+        log.error("Tool execution find_similar_submissions failed", error=str(e), thread_id=thread_id)
         similar_items = []
 
     similar_summary = json.dumps(similar_items, indent=2) if similar_items else "No existing similar submissions found."
@@ -94,6 +101,8 @@ async def submission_agent_node(state: HackathonAgentState, config: RunnableConf
 
     log.info(
         "Submission analysis completed with semantic similarity",
+        node="submission_agent",
+        thread_id=thread_id,
         innovation=analysis.innovation_score,
         technical=analysis.technical_score,
         completeness=analysis.completeness_score,

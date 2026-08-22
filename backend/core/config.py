@@ -17,9 +17,9 @@ class Settings(BaseSettings):
     AI_ENABLED: bool = True
     LOG_LEVEL: str = "INFO"
     APP_ENV: str = "development"
-    LANGCHAIN_TRACING_V2: str = "false"
+    LANGCHAIN_TRACING_V2: str = "true"
     LANGCHAIN_API_KEY: str = ""
-    LANGCHAIN_PROJECT: str = "hackathon"
+    LANGCHAIN_PROJECT: str = "hackathon-orchestrator"
 
     model_config = SettingsConfigDict(
         env_file=(
@@ -32,4 +32,14 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
+# Propagate LangSmith / LangChain tracing configuration to os.environ for native LangChain/LangGraph capture
+os.environ["LANGCHAIN_PROJECT"] = settings.LANGCHAIN_PROJECT
+if settings.LANGCHAIN_TRACING_V2.lower() == "true" and settings.LANGCHAIN_API_KEY:
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_API_KEY"] = settings.LANGCHAIN_API_KEY
+else:
+    os.environ["LANGCHAIN_TRACING_V2"] = "false"
+
+
 

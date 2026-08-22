@@ -37,7 +37,14 @@ async def team_agent_node(state: HackathonAgentState, config: RunnableConfig = N
     3. Prompts LLM with structured output to analyze skill gaps and produce structured recommendations.
     4. Updates state with structured final_result and tool_results.
     """
-    log.info("Team agent node entered", current_messages=len(state.get("messages", [])))
+    thread_id = (config or {}).get("configurable", {}).get("thread_id", "")
+    log.info(
+        "Team agent node entered",
+        node="team_agent",
+        thread_id=thread_id,
+        current_messages=len(state.get("messages", [])),
+        task_type_in=state.get("task_type"),
+    )
 
     messages = state.get("messages", [])
     user_content = ""
@@ -59,7 +66,7 @@ async def team_agent_node(state: HackathonAgentState, config: RunnableConfig = N
             "n_results": 3,
         })
     except Exception as e:
-        log.error("Tool execution find_matching_participants failed", error=str(e))
+        log.error("Tool execution find_matching_participants failed", error=str(e), thread_id=thread_id)
         matched_items = []
 
     matched_summary = json.dumps(matched_items, indent=2) if matched_items else "No matching participant profiles found."
@@ -85,6 +92,8 @@ async def team_agent_node(state: HackathonAgentState, config: RunnableConfig = N
 
     log.info(
         "Team recommendation completed with semantic matching",
+        node="team_agent",
+        thread_id=thread_id,
         missing_skills_count=len(recommendation.missing_skills),
         suggested_roles=recommendation.suggested_roles,
         matched_count=len(matched_items),

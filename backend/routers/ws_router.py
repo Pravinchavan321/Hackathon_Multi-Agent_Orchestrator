@@ -38,7 +38,10 @@ async def stream_agent_execution(websocket: WebSocket, thread_id: str):
     4. Server sends {"type": "done"} and closes connection cleanly
     """
     await websocket.accept()
+    import structlog
+    structlog.contextvars.bind_contextvars(thread_id=thread_id)
     log.info("WebSocket connected", thread_id=thread_id)
+
 
     try:
         # 1. Receive the initial goal / prompt from client

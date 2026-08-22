@@ -1,4 +1,5 @@
 import uuid
+import structlog
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
@@ -7,6 +8,7 @@ from backend.ai.llm import llm, AIOfflineError
 from backend.ai.graph.build_graph import get_compiled_graph
 from backend.core.config import settings
 from backend.core.logging import log
+
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -61,6 +63,7 @@ async def orchestrate(request: OrchestrateRequest):
     try:
         # Auto-generate a thread_id if not provided
         thread_id = request.thread_id or str(uuid.uuid4())
+        structlog.contextvars.bind_contextvars(thread_id=thread_id)
         input_text = request.get_input_text()
 
         log.info(
@@ -117,6 +120,12 @@ async def orchestrate(request: OrchestrateRequest):
 
     except AIOfflineError as e:
         log.warning("AI Engine Offline during orchestration", error=str(e))
+        raise HTTPException(status_code=503, detail={"status": "AI Engine Offline"})
+    except Exception as e:
+        log.error("Unexpected error in orchestration", error=str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Phase 7: Human-in-the-Loop Interrupt & Approval Endpoints ───────
 
 class ApproveRequest(BaseModel):
@@ -130,15 +139,26 @@ async def get_pending_task(thread_id: str):
     Checks if a given thread_id is currently paused at a human-in-the-loop interrupt gate.
     Returns the pending risk assessment and approval status.
     """
+    structlog.contextvars.bind_contextvars(thread_id=thread_id)
+    log.info("Task pending status query received", thread_id=thread_id)
     try:
         graph = get_compiled_graph()
         config = {"configurable": {"thread_id": thread_id}}
         state_snapshot = await graph.aget_state(config)
 
         if not state_snapshot or not state_snapshot.values:
+            log.warning("Task thread not found in checkpoint store", thread_id=thread_id)
             raise HTTPException(status_code=404, detail=f"Task thread '{thread_id}' not found")
 
         is_pending = "human_approval" in (state_snapshot.next or ())
+
+        log.info(
+            "Task pending status evaluated",
+            thread_id=thread_id,
+            pending_approval=is_pending,
+            next_nodes=list(state_snapshot.next or ()),
+            current_agent=state_snapshot.values.get("current_agent"),
+        )
 
         return {
             "thread_id": thread_id,
@@ -162,8 +182,10 @@ async def approve_task(thread_id: str, request: ApproveRequest):
     - 'approve': Resumes the graph from the interrupt point to complete execution.
     - 'reject': Overrides the state to mark as rejected and stops execution.
     """
+    structlog.contextvars.bind_contextvars(thread_id=thread_id)
     try:
         if request.decision not in ("approve", "reject"):
+            log.warning("Invalid approval decision value", thread_id=thread_id, decision=request.decision)
             raise HTTPException(status_code=400, detail="Decision must be 'approve' or 'reject'")
 
         graph = get_compiled_graph()
@@ -171,6 +193,7 @@ async def approve_task(thread_id: str, request: ApproveRequest):
         state_snapshot = await graph.aget_state(config)
 
         if not state_snapshot or not state_snapshot.values:
+            log.warning("Task thread not found for approval", thread_id=thread_id)
             raise HTTPException(status_code=404, detail=f"Task thread '{thread_id}' not found")
 
         is_pending = "human_approval" in (state_snapshot.next or ())
@@ -187,7 +210,11 @@ async def approve_task(thread_id: str, request: ApproveRequest):
         if request.decision == "approve":
             # Resume execution from the interrupt point
             resumed_result = await graph.ainvoke(None, config=config)
-            log.info("Task graph successfully resumed after human approval", thread_id=thread_id)
+            log.info(
+                "Task graph successfully resumed after human approval",
+                thread_id=thread_id,
+                current_agent=resumed_result.get("current_agent", "human_approval"),
+            )
 
             return {
                 "thread_id": thread_id,
@@ -233,5 +260,6 @@ async def approve_task(thread_id: str, request: ApproveRequest):
     except Exception as e:
         log.error("Error processing approval decision", thread_id=thread_id, error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
 
 

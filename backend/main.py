@@ -1,8 +1,10 @@
 import os
+import uuid
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+import structlog
 
 # Load env vars first
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env.example"))
@@ -49,6 +51,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Hackathon Orchestrator API", lifespan=lifespan)
 
+# Request correlation ID middleware
+@app.middleware("http")
+async def correlation_id_middleware(request: Request, call_next):
+    req_id = request.headers.get("X-Request-ID") or f"req-{uuid.uuid4().hex[:8]}"
+    structlog.contextvars.clear_contextvars()
+    structlog.contextvars.bind_contextvars(request_id=req_id)
+    
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = req_id
+    return response
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
@@ -62,3 +75,4 @@ app.add_middleware(
 app.include_router(health_router.router)
 app.include_router(ai_router.router)
 app.include_router(ws_router.router)
+

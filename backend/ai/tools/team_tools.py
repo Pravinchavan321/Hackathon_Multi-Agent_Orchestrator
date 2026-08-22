@@ -59,11 +59,17 @@ def find_matching_participants(needed_skills_description: str, n_results: int = 
         - distance (float): Vector space distance
         - skills_bio (str): The participant's skill profile and background
     """
+    log.info(
+        "Tool called: find_matching_participants",
+        tool="find_matching_participants",
+        query_length=len(needed_skills_description),
+        n_results=n_results,
+    )
     try:
         _, participant_skills_col = get_or_create_collections()
         count = participant_skills_col.count()
         if count == 0:
-            log.info("No participant skills currently indexed in ChromaDB.")
+            log.info("No participant skills currently indexed in ChromaDB", tool="find_matching_participants")
             return []
 
         actual_k = min(n_results, count)
@@ -98,9 +104,16 @@ def find_matching_participants(needed_skills_description: str, n_results: int = 
 
         # Sort descending by match quality
         matched_participants.sort(key=lambda x: x["similarity_score"], reverse=True)
-        log.info("Found matching participants", query_len=len(needed_skills_description), matches_count=len(matched_participants))
+        log.info(
+            "Tool completed: find_matching_participants",
+            tool="find_matching_participants",
+            query_len=len(needed_skills_description),
+            matches_count=len(matched_participants),
+            top_match=matched_participants[0]["name"] if matched_participants else None,
+        )
         return matched_participants
 
     except Exception as e:
-        log.error("Failed to query matching participants", error=str(e))
+        log.error("Failed to query matching participants", tool="find_matching_participants", error=str(e))
         return []
+

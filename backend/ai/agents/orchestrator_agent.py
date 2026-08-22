@@ -24,7 +24,14 @@ async def orchestrator_node(state: HackathonAgentState, config: RunnableConfig =
     Analyzes the user request using LLM structured output to decide the appropriate specialist agent.
     If the request is ambiguous or vague, routes to 'unclear' and stops execution.
     """
-    log.info("Orchestrator node entered", current_messages=len(state.get("messages", [])))
+    thread_id = (config or {}).get("configurable", {}).get("thread_id", "")
+    log.info(
+        "Orchestrator node entered",
+        node="orchestrator",
+        thread_id=thread_id,
+        current_messages=len(state.get("messages", [])),
+        task_type_in=state.get("task_type"),
+    )
 
     messages = state.get("messages", [])
     user_content = ""
@@ -49,9 +56,12 @@ async def orchestrator_node(state: HackathonAgentState, config: RunnableConfig =
 
     log.info(
         "Orchestrator routing decision made",
+        node="orchestrator",
+        thread_id=thread_id,
         task_type=decision.task_type,
         reasoning=decision.reasoning,
     )
+
 
     if decision.task_type == "unclear":
         ai_msg = AIMessage(

@@ -30,7 +30,14 @@ async def risk_agent_node(state: HackathonAgentState, config: RunnableConfig = N
     Audits hackathon events, voting patterns, and submissions for integrity risks.
     Flags requires_human_approval=True for HIGH risk levels.
     """
-    log.info("Risk agent node entered", current_messages=len(state.get("messages", [])))
+    thread_id = (config or {}).get("configurable", {}).get("thread_id", "")
+    log.info(
+        "Risk agent node entered",
+        node="risk_agent",
+        thread_id=thread_id,
+        current_messages=len(state.get("messages", [])),
+        task_type_in=state.get("task_type"),
+    )
 
     messages = state.get("messages", [])
     user_content = ""
@@ -57,10 +64,13 @@ async def risk_agent_node(state: HackathonAgentState, config: RunnableConfig = N
 
     log.info(
         "Risk analysis completed",
+        node="risk_agent",
+        thread_id=thread_id,
         risk_level=analysis.risk_level,
         category=analysis.category,
         requires_approval=requires_approval,
     )
+
 
     ai_msg = AIMessage(
         content=f"Risk Assessment [{analysis.risk_level}]: {analysis.description} (Category: {analysis.category})"
