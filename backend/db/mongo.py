@@ -3,6 +3,8 @@ from beanie import init_beanie
 from backend.core.config import settings
 from backend.core.logging import log
 
+from backend.models import User, Submission, AITask, AIInsight, AIRisk, AIActivityLog
+
 _client = None
 
 async def connect_mongo():
@@ -14,8 +16,11 @@ async def connect_mongo():
         # Ping the database to ensure connection is valid
         await _client.admin.command('ping')
         
-        # Initialize Beanie with an empty list for now
-        await init_beanie(database=_client[settings.MONGO_DB_NAME], document_models=[])
+        # Initialize Beanie with document models
+        await init_beanie(
+            database=_client[settings.MONGO_DB_NAME],
+            document_models=[User, Submission, AITask, AIInsight, AIRisk, AIActivityLog],
+        )
         log.info("Successfully connected to MongoDB and initialized Beanie")
     except Exception as e:
         log.error("Failed to connect to MongoDB", error=str(e))
