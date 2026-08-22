@@ -2,7 +2,20 @@
  * WebSocket client helper for connecting to agent execution stream.
  */
 
-const WS_BASE_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
+export const getWsBaseUrl = () => {
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL;
+  }
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/^http/, "ws");
+  }
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    return `wss://${window.location.host}`;
+  }
+  return "ws://localhost:8080";
+};
+
+const WS_BASE_URL = getWsBaseUrl();
 
 /**
  * Creates and returns a WebSocket connection for a given orchestration thread ID.

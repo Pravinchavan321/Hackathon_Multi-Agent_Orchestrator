@@ -76,5 +76,16 @@ def get_or_create_collections(client: chromadb.HttpClient = None):
     )
 
     log.info("ChromaDB collections verified/initialized", collections=["submissions", "participant_skills"])
+    
+    # Auto-seed if running on fresh instance (e.g. Render embedded Chroma)
+    try:
+        if submissions_col.count() == 0:
+            log.info("ChromaDB submissions collection is empty; running automatic seed...")
+            from backend.scripts.seed import seed_all
+            seed_all()
+    except Exception as e:
+        log.warn("Automatic ChromaDB seeding skipped or encountered non-fatal error", error=str(e))
+
     return submissions_col, participant_skills_col
+
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { getWsBaseUrl } from "../api/ws";
 
 export function useAgentStream(threadId) {
   const [events, setEvents] = useState([]);
@@ -17,7 +18,7 @@ export function useAgentStream(threadId) {
       return;
     }
 
-    const wsBase = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
+    const wsBase = getWsBaseUrl();
     const wsUrl = `${wsBase}/ws/ai/tasks/${threadId}`;
 
     setStreaming(true);
