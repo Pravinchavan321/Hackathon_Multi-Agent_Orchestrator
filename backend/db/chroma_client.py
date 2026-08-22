@@ -19,25 +19,37 @@ def get_embedding_function():
     return _embedding_fn
 
 
-def connect_chroma() -> chromadb.HttpClient:
-    """Connect to ChromaDB server with heartbeat check and caching."""
+def connect_chroma():
+    """Connect to ChromaDB server with heartbeat check, caching, and local persistent fallback."""
     global _client
     if _client is not None:
         return _client
 
+    chroma_host = getattr(settings, "CHROMA_HOST", "localhost")
+    if chroma_host.lower() in ("embedded", "local_file", "none"):
+        log.info("Initializing embedded ChromaDB PersistentClient (./chroma_data)...")
+        _client = chromadb.PersistentClient(path="./chroma_data")
+        return _client
+
     try:
-        log.info("Connecting to ChromaDB...", host=settings.CHROMA_HOST, port=settings.CHROMA_PORT)
+        log.info("Connecting to ChromaDB HttpClient...", host=settings.CHROMA_HOST, port=settings.CHROMA_PORT)
         _client = chromadb.HttpClient(
             host=settings.CHROMA_HOST,
             port=settings.CHROMA_PORT,
             settings=ChromaSettings(allow_reset=True),
         )
         heartbeat = _client.heartbeat()
-        log.info("Successfully connected to ChromaDB", heartbeat=heartbeat)
+        log.info("Successfully connected to ChromaDB HttpClient", heartbeat=heartbeat)
         return _client
     except Exception as e:
-        log.error("Failed to connect to ChromaDB", error=str(e))
-        raise
+        log.warn("ChromaDB HttpClient connection failed; falling back to embedded PersistentClient (./chroma_data)", error=str(e))
+        try:
+            _client = chromadb.PersistentClient(path="./chroma_data")
+            log.info("Successfully initialized embedded ChromaDB PersistentClient")
+            return _client
+        except Exception as embed_err:
+            log.error("Failed to initialize embedded ChromaDB", error=str(embed_err))
+            raise e
 
 
 def get_or_create_collections(client: chromadb.HttpClient = None):

@@ -11,3 +11,7 @@ langchain-google-genai
 langchain
 langgraph
 langgraph-checkpoint-mongodb
+dnspython
+certifi
+httpx
+websockets

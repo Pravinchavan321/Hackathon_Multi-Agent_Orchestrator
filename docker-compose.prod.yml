@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: hackathon-mongo-prod
+    restart: always
+    volumes:
+      - mongo_prod_data:/data/db
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:7
+    container_name: hackathon-redis-prod
+    restart: always
+    volumes:
+      - redis_prod_data:/data
+    ports:
+      - "6379:6379"
+
+  chromadb:
+    image: chromadb/chroma
+    container_name: hackathon-chroma-prod
+    restart: always
+    volumes:
+      - chroma_prod_data:/chroma/chroma
+    ports:
+      - "8000:8000"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: hackathon-backend-prod
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB_NAME=hackathon_db
+      - REDIS_URL=redis://redis:6379
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - AI_PROVIDER=google
+      - AI_API_KEY=${AI_API_KEY}
+      - AI_MODEL=gemini-flash-lite-latest
+      - AI_ENABLED=true
+      - CORS_ORIGINS=*
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
+      - LANGCHAIN_PROJECT=hackathon-orchestrator
+    depends_on:
+      - mongo
+      - redis
+      - chromadb
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8080}
+        - VITE_WS_URL=${VITE_WS_URL:-ws://localhost:8080}
+    container_name: hackathon-frontend-prod
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_prod_data:
+  redis_prod_data:
+  chroma_prod_data:

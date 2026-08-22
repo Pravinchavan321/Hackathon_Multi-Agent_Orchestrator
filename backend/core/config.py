@@ -16,7 +16,9 @@ class Settings(BaseSettings):
     AI_MODEL: str = "gemini-flash-lite-latest"
     AI_ENABLED: bool = True
     LOG_LEVEL: str = "INFO"
-    APP_ENV: str = "development"
+    PORT: int = 8080
+    HOST: str = "0.0.0.0"
+    CORS_ORIGINS: str = "*"
     LANGCHAIN_TRACING_V2: str = "true"
     LANGCHAIN_API_KEY: str = ""
     LANGCHAIN_PROJECT: str = "hackathon-orchestrator"

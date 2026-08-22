@@ -10,6 +10,7 @@ import structlog
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env.example"))
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
 
+from backend.core.config import settings
 from backend.core.logging import log
 from backend.db.mongo import connect_mongo, close_mongo
 from backend.db.redis_client import connect_redis, close_redis
@@ -62,14 +63,25 @@ async def correlation_id_middleware(request: Request, call_next):
     response.headers["X-Request-ID"] = req_id
     return response
 
-# CORS configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS configuration supporting development and production deployments
+origins_raw = getattr(settings, "CORS_ORIGINS", "*")
+if origins_raw == "*" or not origins_raw:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"^https?://.*$",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    allowed_origins = [orig.strip() for orig in origins_raw.split(",") if orig.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Mount routers
 app.include_router(health_router.router)
