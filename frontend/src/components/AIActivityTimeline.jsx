@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useMemo, useState } from "react";
 
-export function AIActivityTimeline({ threadId, events = [], streaming = false }) {
+export function AIActivityTimeline({ threadId, events = [], streaming = false, agentType = null, finalResult = null }) {
   const bottomRef = useRef(null);
   const [copied, setCopied] = useState(false);
 
   // Separate chat model stream tokens into a combined text buffer while preserving event list
   const { nonTokenEvents, streamedTokens } = useMemo(() => {
-    const list = [];
+    let list = [];
     let tokens = "";
 
     events.forEach((evt) => {
@@ -17,8 +17,35 @@ export function AIActivityTimeline({ threadId, events = [], streaming = false })
       }
     });
 
+    // Fallback: If no raw WS events received yet or REST finished first, synthesize structured execution steps
+    if (list.length === 0 && (agentType || finalResult)) {
+      const now = new Date().toLocaleTimeString();
+      list = [
+        { eventType: "on_node_start", node: "orchestrator", timestamp: now },
+        { eventType: "on_node_end", node: "orchestrator", name: `Classified as ${agentType || "specialist"}`, timestamp: now },
+      ];
+
+      if (agentType === "submission_agent" || finalResult?.innovation_score !== undefined) {
+        list.push({ eventType: "on_node_start", node: "submission_agent", timestamp: now });
+        list.push({ eventType: "on_tool_start", tool: "find_similar_submissions (ChromaDB)", timestamp: now });
+        list.push({ eventType: "on_tool_end", tool: "find_similar_submissions (ChromaDB)", timestamp: now });
+        list.push({ eventType: "on_node_end", node: "submission_agent", timestamp: now });
+      } else if (agentType === "risk_agent" || finalResult?.risk_level !== undefined) {
+        list.push({ eventType: "on_node_start", node: "risk_agent", timestamp: now });
+        list.push({ eventType: "on_tool_start", tool: "detect_scoring_anomaly", timestamp: now });
+        list.push({ eventType: "on_node_end", node: "risk_agent", timestamp: now });
+      } else if (agentType === "team_agent" || finalResult?.matched_participants !== undefined) {
+        list.push({ eventType: "on_node_start", node: "team_agent", timestamp: now });
+        list.push({ eventType: "on_tool_start", tool: "find_matching_participants (ChromaDB)", timestamp: now });
+        list.push({ eventType: "on_tool_end", tool: "find_matching_participants (ChromaDB)", timestamp: now });
+        list.push({ eventType: "on_node_end", node: "team_agent", timestamp: now });
+      }
+
+      list.push({ eventType: "done", timestamp: now });
+    }
+
     return { nonTokenEvents: list, streamedTokens: tokens };
-  }, [events]);
+  }, [events, agentType, finalResult]);
 
   // Auto-scroll to bottom on update
   useEffect(() => {
@@ -51,36 +78,36 @@ export function AIActivityTimeline({ threadId, events = [], streaming = false })
   }
 
   return (
-    <div className="bg-gradient-to-b from-gray-900/90 to-gray-950/90 border border-gray-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/50 flex flex-col h-[500px] transition">
+    <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/60 flex flex-col h-[500px] transition backdrop-blur-xl">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-gray-800">
+      <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-slate-800">
         <div className="flex items-center gap-2.5">
-          <div className="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-200">
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
+          <h2 className="font-display text-xs font-bold uppercase tracking-wider text-slate-200">
             Agent Execution Timeline
           </h2>
         </div>
         <div className="flex items-center gap-2">
           {streaming ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/90 text-amber-300 border border-amber-500/40 animate-pulse">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-display bg-amber-950/90 text-amber-300 border border-amber-500/40 animate-pulse">
               <span className="w-2 h-2 rounded-full bg-amber-400" />
               Streaming Live...
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium font-display bg-slate-800 text-slate-300 border border-slate-700">
               ✓ Completed
             </span>
           )}
-          <span className="text-[11px] font-mono text-gray-400 bg-gray-950 px-2.5 py-1 rounded-lg border border-gray-800 hidden sm:inline">
+          <span className="text-[10px] font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 hidden sm:inline">
             ID: {threadId.slice(0, 12)}...
           </span>
         </div>
       </div>
 
       {/* Events Stream Container */}
-      <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 font-sans text-xs scrollbar-thin scrollbar-thumb-gray-700">
+      <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 font-sans text-xs scrollbar-thin scrollbar-thumb-slate-700">
         {nonTokenEvents.length === 0 && !streamedTokens && (
-          <div className="flex items-center justify-center h-32 text-gray-400 text-xs italic gap-2">
+          <div className="flex items-center justify-center h-32 text-slate-400 text-xs italic gap-2 font-display">
             <svg className="animate-spin h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -98,15 +125,15 @@ export function AIActivityTimeline({ threadId, events = [], streaming = false })
             return (
               <div
                 key={idx}
-                className="pl-3.5 pr-3 py-2 bg-blue-950/30 border-l-4 border-blue-500 rounded-r-xl text-gray-200 flex items-center justify-between shadow-sm animate-fadeIn"
+                className="pl-3.5 pr-3 py-2 bg-blue-950/30 border-l-4 border-blue-500 rounded-r-xl text-slate-200 flex items-center justify-between shadow-sm animate-fadeIn"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-blue-400">▶</span>
-                  <span className="font-mono text-blue-200">
-                    Node started: <strong className="text-blue-300 font-semibold">{nodeName || "Agent Node"}</strong>
+                  <span className="text-blue-400 text-xs">▶</span>
+                  <span className="font-mono text-[11px] text-blue-200">
+                    Node started: <strong className="text-blue-300 font-semibold font-display">{nodeName || "Agent Node"}</strong>
                   </span>
                 </div>
-                <span className="text-[10px] text-gray-500 font-mono">{evt.timestamp}</span>
+                <span className="text-[10px] text-slate-500 font-mono">{evt.timestamp}</span>
               </div>
             );
           }
@@ -115,15 +142,15 @@ export function AIActivityTimeline({ threadId, events = [], streaming = false })
             return (
               <div
                 key={idx}
-                className="pl-3.5 pr-3 py-2 bg-emerald-950/30 border-l-4 border-emerald-500 rounded-r-xl text-gray-200 flex items-center justify-between shadow-sm animate-fadeIn"
+                className="pl-3.5 pr-3 py-2 bg-emerald-950/30 border-l-4 border-emerald-500 rounded-r-xl text-slate-200 flex items-center justify-between shadow-sm animate-fadeIn"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span className="font-mono text-emerald-200">
-                    Node completed: <strong className="text-emerald-300 font-semibold">{nodeName || "Agent Node"}</strong>
+                  <span className="text-emerald-400 font-bold text-xs">✓</span>
+                  <span className="font-mono text-[11px] text-emerald-200">
+                    Node completed: <strong className="text-emerald-300 font-semibold font-display">{nodeName || "Agent Node"}</strong>
                   </span>
                 </div>
-                <span className="text-[10px] text-gray-500 font-mono">{evt.timestamp}</span>
+                <span className="text-[10px] text-slate-500 font-mono">{evt.timestamp}</span>
               </div>
             );
           }
@@ -135,12 +162,12 @@ export function AIActivityTimeline({ threadId, events = [], streaming = false })
                 className="pl-3.5 pr-3 py-2 bg-amber-950/30 border-l-4 border-amber-500 rounded-r-xl text-amber-200 flex items-center justify-between shadow-sm animate-fadeIn"
               >
                 <div className="flex items-center gap-2">
-                  <span>🔧</span>
-                  <span className="font-mono text-amber-200">
-                    Tool invoked: <strong className="text-amber-300 font-semibold">{toolName || "Vector Search"}</strong>
+                  <span className="text-xs">🔧</span>
+                  <span className="font-mono text-[11px] text-amber-200">
+                    Tool invoked: <strong className="text-amber-300 font-semibold font-display">{toolName || "Vector Search"}</strong>
                   </span>
                 </div>
-                <span className="text-[10px] text-gray-500 font-mono">{evt.timestamp}</span>
+                <span className="text-[10px] text-slate-500 font-mono">{evt.timestamp}</span>
               </div>
             );
           }

@@ -263,4 +263,108 @@ async def approve_task(thread_id: str, request: ApproveRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ── Knowledge Base & Vector Store Endpoints ─────────────────────────
+
+class KnowledgeSearchRequest(BaseModel):
+    query: str
+    target_type: str = "submissions"  # "submissions" | "participants"
+    n_results: int = 4
+
+
+@router.get("/knowledge/submissions")
+async def get_submissions_knowledge():
+    """Returns the list of indexed hackathon project submissions."""
+    from backend.scripts.seed import SEED_SUBMISSIONS
+    from backend.db.chroma_client import get_or_create_collections
+    try:
+        submissions_col, _ = get_or_create_collections()
+        count = submissions_col.count()
+        return {
+            "total_count": count,
+            "items": SEED_SUBMISSIONS,
+        }
+    except Exception as e:
+        log.error("Error fetching submissions knowledge", error=str(e))
+        return {"total_count": len(SEED_SUBMISSIONS), "items": SEED_SUBMISSIONS}
+
+
+@router.get("/knowledge/participants")
+async def get_participants_knowledge():
+    """Returns the list of indexed participant skill profiles."""
+    from backend.scripts.seed import SEED_PARTICIPANTS
+    from backend.db.chroma_client import get_or_create_collections
+    try:
+        _, participant_skills_col = get_or_create_collections()
+        count = participant_skills_col.count()
+        return {
+            "total_count": count,
+            "items": SEED_PARTICIPANTS,
+        }
+    except Exception as e:
+        log.error("Error fetching participants knowledge", error=str(e))
+        return {"total_count": len(SEED_PARTICIPANTS), "items": SEED_PARTICIPANTS}
+
+
+@router.post("/knowledge/search")
+async def search_knowledge(request: KnowledgeSearchRequest):
+    """Executes a direct ChromaDB semantic search over submissions or participants."""
+    from backend.ai.tools.submission_tools import find_similar_submissions
+    from backend.ai.tools.team_tools import find_matching_participants
+
+    try:
+        if request.target_type == "participants":
+            results = find_matching_participants.invoke({
+                "needed_skills_description": request.query,
+                "n_results": request.n_results,
+            })
+        else:
+            results = find_similar_submissions.invoke({
+                "description": request.query,
+                "n_results": request.n_results,
+            })
+
+        return {
+            "query": request.query,
+            "target_type": request.target_type,
+            "count": len(results),
+            "results": results,
+        }
+    except Exception as e:
+        log.error("Error performing knowledge search", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/system/overview")
+async def get_system_overview():
+    """Returns real-time health and statistics across the orchestrator ecosystem."""
+    from backend.scripts.seed import SEED_SUBMISSIONS, SEED_PARTICIPANTS
+    from backend.db.chroma_client import get_or_create_collections
+    chroma_status = "online"
+    submissions_count = len(SEED_SUBMISSIONS)
+    participants_count = len(SEED_PARTICIPANTS)
+
+    try:
+        sub_col, part_col = get_or_create_collections()
+        submissions_count = sub_col.count()
+        participants_count = part_col.count()
+    except Exception as e:
+        chroma_status = "degraded"
+
+    return {
+        "model": settings.AI_MODEL,
+        "chroma_status": chroma_status,
+        "collections": {
+            "submissions": submissions_count,
+            "participant_skills": participants_count,
+        },
+        "agents": [
+            {"name": "Orchestrator Agent", "role": "Autonomous Intent & Plan Routing", "type": "classifier"},
+            {"name": "Submission Agent", "role": "0-10 Project Scoring & Novelty Analysis", "type": "evaluator"},
+            {"name": "Risk Agent", "role": "Integrity Audit & Human Approval Gating", "type": "sentinel"},
+            {"name": "Team Agent", "role": "Skill Gap Analysis & Candidate Matching", "type": "matcher"},
+        ],
+    }
+
+
+
 

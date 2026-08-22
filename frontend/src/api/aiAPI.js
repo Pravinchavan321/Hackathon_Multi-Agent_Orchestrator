@@ -87,3 +87,51 @@ export const submitApproval = async (threadId, decision, note = "") => {
   }
 };
 
+export const getSubmissionsKnowledge = async () => {
+  const baseUrl = getBaseUrl();
+  try {
+    const response = await fetch(`${baseUrl}/api/ai/knowledge/submissions`);
+    if (!response.ok) throw new Error("Failed to fetch submissions knowledge");
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getParticipantsKnowledge = async () => {
+  const baseUrl = getBaseUrl();
+  try {
+    const response = await fetch(`${baseUrl}/api/ai/knowledge/participants`);
+    if (!response.ok) throw new Error("Failed to fetch participants knowledge");
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const searchKnowledge = async (query, targetType = "submissions", nResults = 4) => {
+  const baseUrl = getBaseUrl();
+  try {
+    const response = await fetch(`${baseUrl}/api/ai/knowledge/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, target_type: targetType, n_results: nResults }),
+    });
+    if (!response.ok) throw new Error("Failed to perform vector search");
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getSystemOverview = async () => {
+  const baseUrl = getBaseUrl();
+  try {
+    const response = await fetch(`${baseUrl}/api/ai/system/overview`);
+    if (!response.ok) throw new Error("Failed to fetch system overview");
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+

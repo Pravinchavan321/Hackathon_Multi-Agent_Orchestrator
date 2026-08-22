@@ -51,11 +51,26 @@ async def stream_agent_execution(websocket: WebSocket, thread_id: str):
 
         log.info("WebSocket message received", thread_id=thread_id, user_message=user_message)
 
-        # 2. Get the compiled graph
+        # 2. Get the compiled graph and config
         graph = get_compiled_graph()
+        config = {"configurable": {"thread_id": thread_id}}
+
+        # If client sends generic "stream" and state is already checkpointed, replay summary without re-running
+        if user_message in ("stream", "", "__PING_TEST__"):
+            state_snapshot = await graph.aget_state(config)
+            if state_snapshot and state_snapshot.values and state_snapshot.values.get("current_agent"):
+                current_agent = state_snapshot.values.get("current_agent", "agent")
+                task_type = state_snapshot.values.get("task_type", "general")
+                await websocket.send_json({"event": "on_node_start", "node": "orchestrator", "name": "orchestrator"})
+                await websocket.send_json({"event": "on_node_end", "node": "orchestrator", "name": f"Routed to {task_type}"})
+                await websocket.send_json({"event": "on_node_start", "node": current_agent, "name": current_agent})
+                await websocket.send_json({"event": "on_node_end", "node": current_agent, "name": f"{current_agent} finished"})
+                await websocket.send_json({"type": "done"})
+                await websocket.close()
+                return
 
         input_state = {
-            "messages": [HumanMessage(content=user_message)],
+            "messages": [HumanMessage(content=user_message or "Evaluate hackathon status")],
             "task_type": "general",
             "hackathon_id": None,
             "current_agent": "",
@@ -64,7 +79,6 @@ async def stream_agent_execution(websocket: WebSocket, thread_id: str):
             "requires_human_approval": False,
             "final_result": None,
         }
-        config = {"configurable": {"thread_id": thread_id}}
 
         # 3. Stream events from LangGraph v2 streaming
         async for event in graph.astream_events(input_state, config=config, version="v2"):

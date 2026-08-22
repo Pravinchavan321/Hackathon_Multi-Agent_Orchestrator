@@ -85,17 +85,17 @@ export function AIOrchestrator({ onTaskStarted, onReset }) {
   };
 
   return (
-    <div className="bg-gradient-to-b from-gray-900/90 to-gray-950/90 border border-gray-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/50 backdrop-blur-sm transition">
+    <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/60 backdrop-blur-xl transition hover:border-slate-700/80">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-3 h-3 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20 animate-pulse" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-200">
-            Autonomous Orchestrator Input
+          <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20 animate-pulse" />
+          <h2 className="font-display text-xs font-bold uppercase tracking-wider text-slate-200">
+            Autonomous Orchestrator Command
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-gray-400 font-mono bg-gray-950 px-2 py-0.5 rounded border border-gray-800">
-            LangGraph v2 • Multi-Agent
+          <span className="text-[10px] text-indigo-300 font-mono bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-800/50">
+            LangGraph StateGraph v2
           </span>
         </div>
       </div>
@@ -103,18 +103,20 @@ export function AIOrchestrator({ onTaskStarted, onReset }) {
       {/* Quick Demo Scenarios Bar */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-400 font-medium">Select a Demo Scenario or Type Your Own:</span>
+          <span className="text-xs text-slate-400 font-medium font-display tracking-wide">
+            Select a Pre-configured Scenario or Enter Custom Goal:
+          </span>
           {message && (
             <button
               type="button"
               onClick={handleClear}
-              className="text-[11px] text-gray-500 hover:text-gray-300 transition underline cursor-pointer"
+              className="text-[11px] text-indigo-400 hover:text-indigo-300 transition font-medium underline cursor-pointer"
             >
               Clear input
             </button>
           )}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {EXAMPLE_PROMPTS.map((ex) => {
             const isSelected = message === ex.prompt;
             return (
@@ -126,22 +128,22 @@ export function AIOrchestrator({ onTaskStarted, onReset }) {
                   setError(null);
                 }}
                 disabled={loading}
-                className={`text-left p-3 rounded-xl border text-xs transition duration-200 flex flex-col justify-between group cursor-pointer ${
+                className={`text-left p-3.5 rounded-xl border text-xs transition-all duration-200 flex flex-col justify-between group cursor-pointer ${
                   isSelected
-                    ? "bg-indigo-950/60 border-indigo-500/80 shadow-md shadow-indigo-950/50"
-                    : "bg-gray-950/60 hover:bg-gray-800/60 border-gray-800 hover:border-gray-700 text-gray-300 hover:text-white"
+                    ? "bg-indigo-950/70 border-indigo-500 shadow-glow-indigo text-white"
+                    : "bg-slate-950/70 hover:bg-slate-900/90 border-slate-800/90 hover:border-slate-700 text-slate-300 hover:text-white"
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-1.5">
-                  <span className="font-semibold text-gray-100 flex items-center gap-1.5">
-                    <span>{ex.icon}</span>
+                  <span className="font-display font-semibold text-slate-100 flex items-center gap-1.5">
+                    <span className="text-sm">{ex.icon}</span>
                     <span>{ex.label}</span>
                   </span>
                 </div>
-                <span className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed group-hover:text-gray-300">
+                <span className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed group-hover:text-slate-300 font-sans">
                   {ex.prompt}
                 </span>
-                <span className={`mt-2 inline-block self-start text-[10px] font-mono px-1.5 py-0.5 rounded border ${ex.badgeColor}`}>
+                <span className={`mt-2.5 inline-block self-start text-[10px] font-mono px-2 py-0.5 rounded-md border font-semibold ${ex.badgeColor}`}>
                   {ex.badge}
                 </span>
               </button>
@@ -160,7 +162,7 @@ export function AIOrchestrator({ onTaskStarted, onReset }) {
             onKeyDown={handleKeyDown}
             placeholder="Describe a hackathon goal, submit project details, report voting anomalies, or seek teammates..."
             disabled={loading}
-            className="w-full bg-gray-950 border border-gray-700/80 focus:border-indigo-500 rounded-xl p-3.5 text-xs sm:text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none font-sans leading-relaxed transition"
+            className="w-full bg-slate-950/90 border border-slate-800 focus:border-indigo-500 rounded-xl p-3.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none font-sans leading-relaxed transition shadow-inner"
           />
           <span className="absolute bottom-2.5 right-3 text-[10px] text-gray-500 select-none hidden sm:inline">
             Press <kbd className="px-1 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-300">Ctrl+Enter</kbd> to run

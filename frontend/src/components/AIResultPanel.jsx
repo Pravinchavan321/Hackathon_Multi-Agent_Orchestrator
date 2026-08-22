@@ -119,77 +119,79 @@ export function AIResultPanel({ result, agentType, pendingApproval = false, stre
     };
 
     return (
-      <div className="bg-gradient-to-b from-gray-900/90 to-gray-950/90 border border-gray-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/50 space-y-4 animate-fadeIn">
+      <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/60 space-y-4 animate-fadeIn backdrop-blur-xl">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-gray-800">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
             <span className="w-3 h-3 rounded-full bg-blue-500 ring-4 ring-blue-500/20" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-blue-300">
+            <h2 className="font-display text-xs font-bold uppercase tracking-wider text-blue-300">
               Submission Evaluation Report
             </h2>
           </div>
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800/60 font-mono">
+          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-950/80 text-blue-300 border border-blue-800/60 font-mono font-semibold">
             submission_agent
           </span>
         </div>
 
         {/* Executive Summary */}
         {result.summary && (
-          <div className="p-3.5 bg-gray-950 border border-gray-800/90 rounded-xl text-xs text-gray-200 leading-relaxed shadow-sm">
-            <div className="flex items-center justify-between mb-1.5">
-              <strong className="text-blue-400 font-semibold text-[11px] uppercase tracking-wider">Executive Summary:</strong>
+          <div className="p-4 bg-slate-950/90 border border-slate-800/90 rounded-xl text-xs text-slate-200 leading-relaxed shadow-inner space-y-1.5">
+            <div className="flex items-center justify-between">
+              <strong className="font-display text-blue-400 font-semibold text-[11px] uppercase tracking-wider">
+                Executive Summary:
+              </strong>
               <button
                 type="button"
                 onClick={() => handleCopy(result.summary)}
-                className="text-[10px] text-gray-400 hover:text-gray-200 transition cursor-pointer"
+                className="text-[10px] font-mono text-slate-400 hover:text-slate-200 transition cursor-pointer bg-slate-900 px-2 py-0.5 rounded border border-slate-800"
               >
                 {copied ? "Copied!" : "Copy"}
               </button>
             </div>
-            <p className="text-gray-300 leading-relaxed">{result.summary}</p>
+            <p className="text-slate-300 leading-relaxed font-sans">{result.summary}</p>
           </div>
         )}
 
         {/* Score Meters */}
-        <div className="p-4 bg-gray-950 border border-gray-800/90 rounded-xl space-y-3 text-xs">
-          <span className="font-bold text-gray-300 block text-[11px] uppercase tracking-wider">
+        <div className="p-4 bg-slate-950/90 border border-slate-800/90 rounded-xl space-y-3.5 text-xs shadow-inner">
+          <span className="font-display font-bold text-slate-300 block text-[11px] uppercase tracking-wider">
             Evaluation Scoring (0 - 10):
           </span>
 
-          <div>
-            <div className="flex justify-between text-gray-300 mb-1 font-medium">
-              <span>Innovation & Novelty</span>
-              <span className="font-bold text-blue-400">{result.innovation_score} / 10</span>
+          <div className="space-y-1">
+            <div className="flex justify-between text-slate-300 font-medium">
+              <span className="font-display text-xs">Innovation & Novelty</span>
+              <span className="font-display font-bold text-blue-400 text-xs">{result.innovation_score} / 10</span>
             </div>
-            <div className="w-full h-2.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
               <div
-                className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-700"
+                className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-400 rounded-full transition-all duration-700 shadow-glow-indigo"
                 style={{ width: getScoreWidth(result.innovation_score) }}
               />
             </div>
           </div>
 
-          <div>
-            <div className="flex justify-between text-gray-300 mb-1 font-medium">
-              <span>Technical Complexity</span>
-              <span className="font-bold text-indigo-400">{result.technical_score} / 10</span>
+          <div className="space-y-1">
+            <div className="flex justify-between text-slate-300 font-medium">
+              <span className="font-display text-xs">Technical Complexity</span>
+              <span className="font-display font-bold text-indigo-400 text-xs">{result.technical_score} / 10</span>
             </div>
-            <div className="w-full h-2.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
               <div
-                className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 rounded-full transition-all duration-700"
+                className="h-full bg-gradient-to-r from-indigo-600 via-purple-500 to-indigo-400 rounded-full transition-all duration-700 shadow-glow-indigo"
                 style={{ width: getScoreWidth(result.technical_score) }}
               />
             </div>
           </div>
 
-          <div>
-            <div className="flex justify-between text-gray-300 mb-1 font-medium">
-              <span>Completeness & Polish</span>
-              <span className="font-bold text-emerald-400">{result.completeness_score} / 10</span>
+          <div className="space-y-1">
+            <div className="flex justify-between text-slate-300 font-medium">
+              <span className="font-display text-xs">Completeness & Polish</span>
+              <span className="font-display font-bold text-emerald-400 text-xs">{result.completeness_score} / 10</span>
             </div>
-            <div className="w-full h-2.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
               <div
-                className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full transition-all duration-700"
+                className="h-full bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-400 rounded-full transition-all duration-700 shadow-glow-emerald"
                 style={{ width: getScoreWidth(result.completeness_score) }}
               />
             </div>
@@ -198,11 +200,11 @@ export function AIResultPanel({ result, agentType, pendingApproval = false, stre
 
         {/* Strengths & Weaknesses */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div className="p-3.5 bg-emerald-950/20 border border-emerald-800/30 rounded-xl">
-            <span className="font-bold text-emerald-400 block mb-2 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+          <div className="p-3.5 bg-emerald-950/20 border border-emerald-800/30 rounded-xl space-y-2">
+            <span className="font-display font-bold text-emerald-400 block flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
               <span>✓</span> Key Strengths:
             </span>
-            <ul className="space-y-1.5 text-gray-300 leading-relaxed">
+            <ul className="space-y-1.5 text-slate-300 leading-relaxed font-sans">
               {result.strengths?.map((s, idx) => (
                 <li key={idx} className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">•</span>
@@ -212,11 +214,11 @@ export function AIResultPanel({ result, agentType, pendingApproval = false, stre
             </ul>
           </div>
 
-          <div className="p-3.5 bg-rose-950/20 border border-rose-800/30 rounded-xl">
-            <span className="font-bold text-rose-400 block mb-2 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+          <div className="p-3.5 bg-rose-950/20 border border-rose-800/30 rounded-xl space-y-2">
+            <span className="font-display font-bold text-rose-400 block flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
               <span>✕</span> Areas for Improvement:
             </span>
-            <ul className="space-y-1.5 text-gray-300 leading-relaxed">
+            <ul className="space-y-1.5 text-slate-300 leading-relaxed font-sans">
               {result.weaknesses?.map((w, idx) => (
                 <li key={idx} className="flex items-start gap-2">
                   <span className="text-rose-400 font-bold">•</span>
@@ -229,30 +231,30 @@ export function AIResultPanel({ result, agentType, pendingApproval = false, stre
 
         {/* Novelty Assessment */}
         {result.novelty_assessment && (
-          <div className="p-3.5 bg-indigo-950/30 border border-indigo-800/40 rounded-xl text-xs text-gray-200 leading-relaxed">
-            <strong className="text-indigo-300 block mb-1 text-[11px] uppercase tracking-wider">
+          <div className="p-4 bg-indigo-950/30 border border-indigo-800/40 rounded-xl text-xs text-slate-200 leading-relaxed space-y-1">
+            <strong className="font-display text-indigo-300 block text-[11px] uppercase tracking-wider">
               ChromaDB Prior Art & Novelty Analysis:
             </strong>
-            <p className="text-gray-300 leading-relaxed">{result.novelty_assessment}</p>
+            <p className="text-slate-300 leading-relaxed font-sans">{result.novelty_assessment}</p>
           </div>
         )}
 
         {/* Similar Submissions Table */}
         {similar.length > 0 && (
-          <div>
-            <span className="text-xs font-bold text-gray-300 block mb-2 uppercase tracking-wider">
+          <div className="space-y-2">
+            <span className="font-display text-xs font-bold text-slate-300 block uppercase tracking-wider">
               Semantically Similar Submissions (ChromaDB Vector Retrieval):
             </span>
-            <div className="border border-gray-800 rounded-xl overflow-hidden text-xs shadow-inner">
+            <div className="border border-slate-800 rounded-xl overflow-hidden text-xs shadow-inner">
               <table className="w-full text-left">
-                <thead className="bg-gray-950 text-gray-400 border-b border-gray-800">
+                <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 font-display text-[11px]">
                   <tr>
-                    <th className="p-2.5">Project Title</th>
-                    <th className="p-2.5">Similarity</th>
-                    <th className="p-2.5">Description Snippet</th>
+                    <th className="p-2.5 font-semibold">Project Title</th>
+                    <th className="p-2.5 font-semibold">Similarity</th>
+                    <th className="p-2.5 font-semibold">Description Snippet</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-800/60 bg-gray-900/60">
+                <tbody className="divide-y divide-slate-800/60 bg-slate-900/60">
                   {similar.map((item, idx) => {
                     const score = item.similarity_score || 0;
                     const badgeColor =
@@ -263,14 +265,14 @@ export function AIResultPanel({ result, agentType, pendingApproval = false, stre
                         : "bg-emerald-950/80 text-emerald-300 border-emerald-800";
 
                     return (
-                      <tr key={idx} className="hover:bg-gray-800/40 transition">
-                        <td className="p-2.5 font-semibold text-gray-100 whitespace-nowrap">{item.title}</td>
+                      <tr key={idx} className="hover:bg-slate-800/40 transition">
+                        <td className="p-2.5 font-display font-semibold text-slate-100 whitespace-nowrap">{item.title}</td>
                         <td className="p-2.5 whitespace-nowrap">
-                          <span className={`px-2.5 py-0.5 rounded-md border text-[11px] font-mono font-bold ${badgeColor}`}>
-                            {(score * 100).toFixed(1)}%
+                          <span className={`px-2.5 py-0.5 rounded-md border text-[10px] font-mono font-bold ${badgeColor}`}>
+                            {(score * 100).toFixed(1)}% Match
                           </span>
                         </td>
-                        <td className="p-2.5 text-gray-400 max-w-xs truncate">{item.description}</td>
+                        <td className="p-2.5 text-slate-400 max-w-xs truncate font-sans">{item.description}</td>
                       </tr>
                     );
                   })}
@@ -288,56 +290,66 @@ export function AIResultPanel({ result, agentType, pendingApproval = false, stre
     const level = result.risk_level || "LOW";
     const badgeStyle =
       level === "HIGH"
-        ? "bg-rose-950 text-rose-300 border-rose-600 animate-pulse font-bold"
+        ? "bg-rose-950 text-rose-300 border-rose-600 animate-pulse font-bold shadow-glow-rose"
         : level === "MEDIUM"
         ? "bg-amber-950 text-amber-300 border-amber-600 font-bold"
-        : "bg-emerald-950 text-emerald-300 border-emerald-600 font-bold";
+        : "bg-emerald-950 text-emerald-300 border-emerald-600 font-bold shadow-glow-emerald";
 
     return (
-      <div className="bg-gradient-to-b from-gray-900/90 to-gray-950/90 border border-gray-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/50 space-y-4 animate-fadeIn">
-        <div className="flex items-center justify-between pb-3.5 border-b border-gray-800">
-          <div className="flex items-center gap-2">
+      <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/60 space-y-4 animate-fadeIn backdrop-blur-xl">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
             <span className="w-3 h-3 rounded-full bg-rose-500 ring-4 ring-rose-500/20" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-rose-300">
+            <h2 className="font-display text-xs font-bold uppercase tracking-wider text-rose-300">
               Integrity & Risk Audit Report
             </h2>
           </div>
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800/60 font-mono">
+          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-rose-950/80 text-rose-300 border border-rose-800/60 font-mono font-semibold">
             risk_agent
           </span>
         </div>
 
         {/* Pending Banner */}
         {pendingApproval && (
-          <div className="p-3.5 bg-amber-950/80 border border-amber-500/60 rounded-xl flex items-center justify-between text-xs text-amber-200 shadow-lg shadow-amber-950/40">
-            <span className="font-semibold flex items-center gap-2">
+          <div className="p-4 bg-amber-950/80 border border-amber-500/60 rounded-xl flex items-center justify-between text-xs text-amber-200 shadow-lg shadow-amber-950/40">
+            <span className="font-display font-semibold flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-              Execution Paused: Awaiting Human Reviewer Approval
+              Execution Paused: Awaiting Human Reviewer Approval (HITL Gate)
+            </span>
+          </div>
+        )}
+
+        {/* Approved by Human Banner */}
+        {!pendingApproval && (agentType === "human_approval" || result.decision === "approve" || result.status === "approved") && (
+          <div className="p-4 bg-emerald-950/80 border border-emerald-500/60 rounded-xl flex items-center justify-between text-xs text-emerald-200 shadow-lg shadow-emerald-950/40">
+            <span className="font-display font-semibold flex items-center gap-2">
+              <span className="text-emerald-400 font-bold text-sm">✓</span>
+              Human Review Verified & Approved for Execution
             </span>
           </div>
         )}
 
         {/* Risk Level Badge */}
-        <div className="p-4 bg-gray-950 border border-gray-800/90 rounded-xl flex items-center justify-between">
+        <div className="p-4 bg-slate-950/90 border border-slate-800/90 rounded-xl flex items-center justify-between shadow-inner">
           <div>
-            <span className="text-[11px] text-gray-400 uppercase tracking-wider block font-semibold">Assessed Risk Level:</span>
-            <span className="text-xs text-gray-200 mt-1 block">Category: <strong className="text-rose-300">{result.category || "General"}</strong></span>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold font-display">Assessed Risk Level:</span>
+            <span className="text-xs text-slate-200 mt-1 block font-sans">Category: <strong className="text-rose-300 font-semibold">{result.category || "General"}</strong></span>
           </div>
-          <span className={`px-3.5 py-1.5 rounded-xl border text-sm uppercase tracking-wider ${badgeStyle}`}>
+          <span className={`px-4 py-1.5 rounded-xl border text-xs uppercase tracking-wider font-display font-bold ${badgeStyle}`}>
             {level} Risk
           </span>
         </div>
 
         {/* Description & Evidence */}
-        <div className="p-4 bg-gray-950 border border-gray-800/90 rounded-xl text-xs space-y-3">
+        <div className="p-4 bg-slate-950/90 border border-slate-800/90 rounded-xl text-xs space-y-3 shadow-inner">
           <div>
-            <strong className="text-gray-300 block mb-1 text-[11px] uppercase tracking-wider">Concern Description:</strong>
-            <p className="text-gray-200 leading-relaxed">{result.description}</p>
+            <strong className="font-display text-slate-300 block mb-1 text-[11px] uppercase tracking-wider">Concern Description:</strong>
+            <p className="text-slate-200 leading-relaxed font-sans">{result.description}</p>
           </div>
           {result.evidence && (
-            <div className="pt-3 border-t border-gray-800">
-              <strong className="text-gray-300 block mb-1 text-[11px] uppercase tracking-wider">Concrete Evidence:</strong>
-              <p className="text-amber-300/90 font-mono text-[11px] bg-black/60 p-2.5 rounded-lg border border-gray-800 leading-relaxed">
+            <div className="pt-3 border-t border-slate-800/80">
+              <strong className="font-display text-slate-300 block mb-1 text-[11px] uppercase tracking-wider">Concrete Evidence:</strong>
+              <p className="text-amber-300/90 font-mono text-[11px] bg-black/60 p-3 rounded-lg border border-slate-800 leading-relaxed">
                 {result.evidence}
               </p>
             </div>
@@ -352,49 +364,49 @@ export function AIResultPanel({ result, agentType, pendingApproval = false, stre
     const matched = result.matched_participants || [];
 
     return (
-      <div className="bg-gradient-to-b from-gray-900/90 to-gray-950/90 border border-gray-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/50 space-y-4 animate-fadeIn">
-        <div className="flex items-center justify-between pb-3.5 border-b border-gray-800">
-          <div className="flex items-center gap-2">
+      <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/60 space-y-4 animate-fadeIn backdrop-blur-xl">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
             <span className="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+            <h2 className="font-display text-xs font-bold uppercase tracking-wider text-emerald-300">
               Team Matching & Skill Recommendations
             </h2>
           </div>
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800/60 font-mono">
+          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 font-mono font-semibold">
             team_agent
           </span>
         </div>
 
         {/* Overview */}
         {result.recommendation_summary && (
-          <div className="p-3.5 bg-gray-950 border border-gray-800/90 rounded-xl text-xs text-gray-200 leading-relaxed shadow-sm">
-            <strong className="text-emerald-400 block mb-1 text-[11px] uppercase tracking-wider">Overview:</strong>
-            <p className="text-gray-300 leading-relaxed">{result.recommendation_summary}</p>
+          <div className="p-4 bg-slate-950/90 border border-slate-800/90 rounded-xl text-xs text-slate-200 leading-relaxed shadow-inner space-y-1">
+            <strong className="font-display text-emerald-400 block text-[11px] uppercase tracking-wider">Overview:</strong>
+            <p className="text-slate-300 leading-relaxed font-sans">{result.recommendation_summary}</p>
           </div>
         )}
 
         {/* Missing Skills & Roles */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div className="p-3.5 bg-gray-950 border border-gray-800/90 rounded-xl">
-            <span className="font-bold text-gray-300 block mb-2 text-[11px] uppercase tracking-wider">
+          <div className="p-3.5 bg-slate-950/90 border border-slate-800/90 rounded-xl space-y-2 shadow-inner">
+            <span className="font-display font-bold text-slate-300 block text-[11px] uppercase tracking-wider">
               Identified Skill Gaps:
             </span>
             <div className="flex flex-wrap gap-1.5">
               {result.missing_skills?.map((s, idx) => (
-                <span key={idx} className="px-2.5 py-1 bg-indigo-950/80 border border-indigo-700/50 text-indigo-300 rounded-lg text-[11px] font-medium">
+                <span key={idx} className="px-2.5 py-1 bg-indigo-950/80 border border-indigo-700/50 text-indigo-300 rounded-lg text-[10px] font-mono font-semibold">
                   {s}
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="p-3.5 bg-gray-950 border border-gray-800/90 rounded-xl">
-            <span className="font-bold text-gray-300 block mb-2 text-[11px] uppercase tracking-wider">
+          <div className="p-3.5 bg-slate-950/90 border border-slate-800/90 rounded-xl space-y-2 shadow-inner">
+            <span className="font-display font-bold text-slate-300 block text-[11px] uppercase tracking-wider">
               Recommended Roles:
             </span>
             <div className="flex flex-wrap gap-1.5">
               {result.suggested_roles?.map((r, idx) => (
-                <span key={idx} className="px-2.5 py-1 bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 rounded-lg text-[11px] font-medium">
+                <span key={idx} className="px-2.5 py-1 bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 rounded-lg text-[10px] font-mono font-semibold">
                   {r}
                 </span>
               ))}
@@ -404,17 +416,17 @@ export function AIResultPanel({ result, agentType, pendingApproval = false, stre
 
         {/* Compatibility Reasoning */}
         {result.compatibility_reasoning && (
-          <div className="p-3.5 bg-gray-950 border border-gray-800/90 rounded-xl text-xs text-gray-300 leading-relaxed">
-            <strong className="text-gray-400 block mb-1 text-[11px] uppercase tracking-wider">Team Composition Rationale:</strong>
-            <p className="text-gray-300 leading-relaxed">{result.compatibility_reasoning}</p>
+          <div className="p-3.5 bg-slate-950/90 border border-slate-800/90 rounded-xl text-xs text-slate-300 leading-relaxed space-y-1 shadow-inner">
+            <strong className="font-display text-slate-400 block text-[11px] uppercase tracking-wider">Team Composition Rationale:</strong>
+            <p className="text-slate-300 leading-relaxed font-sans">{result.compatibility_reasoning}</p>
           </div>
         )}
 
         {/* Matched Participants Cards */}
         {matched.length > 0 && (
-          <div>
-            <span className="text-xs font-bold text-gray-300 block mb-2.5 uppercase tracking-wider">
-              Candidate Teammates (Matched via ChromaDB Embeddings):
+          <div className="space-y-2.5">
+            <span className="font-display text-xs font-bold text-slate-300 block uppercase tracking-wider">
+              Candidate Teammates (ChromaDB Vector Embeddings Match):
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               {matched.map((p, idx) => {
@@ -422,19 +434,19 @@ export function AIResultPanel({ result, agentType, pendingApproval = false, stre
                 const initials = p.name ? p.name.split(" ").map(n => n[0]).join("").slice(0, 2) : "??";
 
                 return (
-                  <div key={idx} className="p-3.5 bg-gray-950 border border-gray-800/90 rounded-xl hover:border-emerald-500/50 transition-all duration-200 shadow-sm hover:shadow-emerald-950/30">
+                  <div key={idx} className="p-3.5 bg-slate-950/90 border border-slate-800/90 rounded-xl hover:border-emerald-500/50 transition-all duration-200 shadow-sm hover:shadow-glow-emerald">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-600/50 text-emerald-300 flex items-center justify-center font-bold text-[10px]">
+                        <div className="w-7 h-7 rounded-full bg-emerald-950 border border-emerald-600/50 text-emerald-300 flex items-center justify-center font-display font-bold text-xs shadow-sm">
                           {initials}
                         </div>
-                        <span className="font-bold text-gray-100">{p.name}</span>
+                        <span className="font-display font-bold text-slate-100 text-xs">{p.name}</span>
                       </div>
                       <span className="px-2 py-0.5 rounded-md bg-emerald-950 border border-emerald-700 text-emerald-300 text-[10px] font-mono font-bold">
                         {(score * 100).toFixed(1)}% Match
                       </span>
                     </div>
-                    <p className="text-gray-400 text-[11px] leading-relaxed line-clamp-3">
+                    <p className="text-slate-400 text-[11px] leading-relaxed line-clamp-3 font-sans">
                       {p.skills_bio}
                     </p>
                   </div>

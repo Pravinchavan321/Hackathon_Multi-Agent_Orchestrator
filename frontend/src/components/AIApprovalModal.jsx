@@ -9,7 +9,7 @@ const QUICK_NOTES = [
 ];
 
 export function AIApprovalModal({ threadId, riskResult, onDecision, visible = false }) {
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(QUICK_NOTES[0]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
