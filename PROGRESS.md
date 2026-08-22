@@ -346,6 +346,16 @@ $ python -m backend.tests.test_human_approval
 ===========================================================================
 ```
 
+#### Structlog Timestamps for Pause/Resumption Proof:
+- **Initial Risk Detection & Interrupt Pause (Thread `test-approval-high-502fc987`):**
+  `{"timestamp": "2026-08-22T05:35:29.491092Z", "event": "Risk analysis completed", "level": "info", "risk_level": "HIGH", "requires_approval": true}`
+  `{"timestamp": "2026-08-22T05:35:29.518555Z", "event": "Graph orchestration completed", "level": "info", "task_type": "risk", "current_agent": "risk_agent"}`
+- **Human Approval Submission & Graph Resumption:**
+  `{"timestamp": "2026-08-22T05:35:29.564985Z", "event": "Human approval decision received", "level": "info", "decision": "approve", "note": "Verified bot IP cluster on Grafana dashboard. Flag approved."}`
+  `{"timestamp": "2026-08-22T05:35:29.573650Z", "event": "Human approval node executing (action resumed after human sign-off)", "level": "info", "current_agent": "human_approval", "task_type": "risk"}`
+  `{"timestamp": "2026-08-22T05:35:29.581931Z", "event": "Task graph successfully resumed after human approval", "level": "info"}`
+
+
 ---
 
 ## Failure log
