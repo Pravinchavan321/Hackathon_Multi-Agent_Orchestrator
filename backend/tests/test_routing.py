@@ -34,7 +34,14 @@ TEST_CASES = [
             "and someone with UI/UX design experience to join us."
         ),
     },
+    {
+        "name": "Ambiguous / Greeting Test (Unclear Domain)",
+        "expected_agent": "orchestrator",
+        "expected_task_type": "unclear",
+        "message": "Hello! What's up?",
+    },
 ]
+
 
 
 async def run_routing_tests():
@@ -104,11 +111,12 @@ async def run_routing_tests():
 
     print("\n" + "=" * 70)
     if all_passed:
-        print("  ALL 3 ROUTING TESTS PASSED SUCCESSFULLY!")
+        print("  ALL 4 ROUTING TESTS PASSED SUCCESSFULLY!")
     else:
         print("  ROUTING TESTS FAILED - SEE ERRORS ABOVE")
     print("=" * 70)
     await asyncio.sleep(0.5)
+
 
 
 if __name__ == "__main__":

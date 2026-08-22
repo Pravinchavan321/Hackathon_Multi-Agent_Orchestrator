@@ -10,8 +10,8 @@ from backend.core.logging import log
 
 
 class RouteDecision(BaseModel):
-    task_type: Literal["submission", "risk", "team"] = Field(
-        description="The target specialist agent: submission, risk, or team"
+    task_type: Literal["submission", "risk", "team", "unclear"] = Field(
+        description="The target specialist agent: submission, risk, team, or unclear"
     )
     reasoning: str = Field(
         description="Detailed explanation for why this routing decision was chosen"
@@ -22,6 +22,7 @@ async def orchestrator_node(state: HackathonAgentState, config: RunnableConfig =
     """
     Orchestrator Node:
     Analyzes the user request using LLM structured output to decide the appropriate specialist agent.
+    If the request is ambiguous or vague, routes to 'unclear' and stops execution.
     """
     log.info("Orchestrator node entered", current_messages=len(state.get("messages", [])))
 
@@ -52,13 +53,26 @@ async def orchestrator_node(state: HackathonAgentState, config: RunnableConfig =
         reasoning=decision.reasoning,
     )
 
-    ai_msg = AIMessage(
-        content=f"Orchestrator routed to [{decision.task_type}]: {decision.reasoning}"
-    )
+    if decision.task_type == "unclear":
+        ai_msg = AIMessage(
+            content=f"Request unclear: {decision.reasoning}. Please clarify if you want to evaluate a submission, report/detect a risk, or find team members."
+        )
+        final_result = {
+            "status": "unclear",
+            "message": "Your request is too vague or does not match a specialist domain. Please clarify your goal.",
+            "reasoning": decision.reasoning,
+        }
+    else:
+        ai_msg = AIMessage(
+            content=f"Orchestrator routed to [{decision.task_type}]: {decision.reasoning}"
+        )
+        final_result = None
 
     return {
         "messages": [ai_msg],
         "current_agent": "orchestrator",
         "task_type": decision.task_type,
         "plan": [{"step": 1, "agent": decision.task_type, "reasoning": decision.reasoning}],
+        "final_result": final_result,
     }
+

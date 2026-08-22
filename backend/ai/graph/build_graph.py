@@ -60,7 +60,7 @@ def get_compiled_graph():
     # Entry point is the master orchestrator
     builder.set_entry_point("orchestrator")
 
-    # Conditional routing from orchestrator to specialist agents
+    # Conditional routing from orchestrator to specialist agents or END if unclear
     builder.add_conditional_edges(
         "orchestrator",
         route_to_agent,
@@ -68,6 +68,7 @@ def get_compiled_graph():
             "submission": "submission_agent",
             "risk": "risk_agent",
             "team": "team_agent",
+            "unclear": END,
         },
     )
 

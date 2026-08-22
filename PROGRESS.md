@@ -139,50 +139,63 @@ $ python -m backend.tests.test_routing
 
 [1] Running: Submission Analysis Test
     Message: "Please review our hackathon project 'DeFi Guardian'. It is an automated risk ana..."
-    Thread ID: test-route-5980f096
+    Thread ID: test-route-a9c488ce
     -> Orchestrator Task Type Decision : submission
-    -> Orchestrator Reasoning          : The user is asking for a review and evaluation of a specific hackathon project ('DeFi Guardian') including its technical complexity, innovation, and completeness score, which falls directly under the submission domain.
+    -> Orchestrator Reasoning          : The user explicitly describes an actual project named 'DeFi Guardian', detailing its technology stack (Solidity, Next.js) and functionality, and asks for evaluation and scoring, which fits the 'submission' category.
     -> Landed at Agent Node            : submission_agent
     -> Requires Human Approval         : False
     -> Agent Structured Final Result   :
          innovation_score: 7.5
          technical_score: 8.0
-         completeness_score: 6.5
-         summary: DeFi Guardian is an automated risk analysis tool for liquidity pools, combining smart contracts in Solidity with a Next.js frontend interface. It aims to protect users by evaluating smart contract vulnerabilities and pool metrics in real-time.
-         strengths: ['Practical and high-value use case in the DeFi security space', 'Solid tech stack combining Solidity smart contracts with a modern Next.js frontend', 'Automated approach reduces manual auditing overhead for users']
-         weaknesses: ['Lack of detailed architectural specifics regarding the automated risk algorithms', 'Unclear how real-time data feeds and oracles are integrated', 'Frontend completeness and user testing results were not provided']
+         completeness_score: 7.0
+         summary: DeFi Guardian is an automated risk analyzer designed for liquidity pools, leveraging Solidity smart contracts for on-chain logic and a Next.js frontend for user interaction. It aims to help users safely navigate decentralized finance by providing real-time risk assessments.
+         strengths: ['Practical use case addressing real financial security risks in decentralized finance', 'Solid technology stack combining Solidity for smart contracts and Next.js for a responsive frontend', 'Clear automated analysis workflow']
+         weaknesses: ['Limited details provided regarding specific algorithms used for risk analysis', 'Unclear how real-time data feeds or oracles are integrated', 'Needs more comprehensive testing and auditing details for production readiness']
     [PASS] Successfully routed to submission_agent with valid structured result.
 
 [2] Running: Risk Detection Test
     Message: "Warning: We noticed an anomalous spike of 500 upvotes for Team Alpha within 2 mi..."
-    Thread ID: test-route-091c1add
+    Thread ID: test-route-5e42edbc
     -> Orchestrator Task Type Decision : risk
-    -> Orchestrator Reasoning          : The user input describes an anomalous voting spike and potential bot collusion, which directly falls under anomaly detection, suspicious voting patterns, and hackathon integrity risks handled by the risk agent.
+    -> Orchestrator Reasoning          : The user input explicitly describes suspicious voting patterns, bot activity, and potential vote brigading, which falls directly under hackathon integrity risks and the risk specialist domain.
     -> Landed at Agent Node            : risk_agent
     -> Requires Human Approval         : True
     -> Agent Structured Final Result   :
          risk_level: HIGH
          category: vote_brigading
-         description: An anomalous spike of 500 upvotes originating from brand-new IP addresses within a very short timeframe of 2 minutes strongly indicates automated bot activity or coordinated vote brigading.
-         evidence: 500 upvotes for Team Alpha within 2 minutes from brand-new IP addresses.
+         description: An anomalous spike of 500 upvotes originating from brand-new IP addresses within a short window of 2 minutes, indicating automated bot collusion and vote manipulation.
+         evidence: 500 upvotes received within 2 minutes from brand-new IP addresses for Team Alpha.
     [PASS] Successfully routed to risk_agent with valid structured result.
 
 [3] Running: Team Matching Test
     Message: "Our team is building an AI-powered legal assistant for the hackathon. We current..."
-    Thread ID: test-route-13995ef2
+    Thread ID: test-route-8ea4423c
     -> Orchestrator Task Type Decision : team
-    -> Orchestrator Reasoning          : The user is looking for specific teammates (Frontend React developer and UI/UX designer) to complement their existing backend developers for the hackathon project, which directly falls under the team matching and collaboration domain.
+    -> Orchestrator Reasoning          : The user explicitly describes their current team composition and states they are looking for specific teammates (a Frontend React developer and a UI/UX designer), which directly aligns with the 'team' category.
     -> Landed at Agent Node            : team_agent
     -> Requires Human Approval         : False
     -> Agent Structured Final Result   :
-         recommendation_summary: The team is building an AI-powered legal assistant and currently has strong backend capabilities with two Python developers. To build a complete and user-friendly product, they urgently need frontend and design expertise.
-         missing_skills: ['React', 'JavaScript', 'TypeScript', 'UI/UX Design', 'Figma', 'HTML/CSS']
-         suggested_roles: ['Frontend React Developer', 'UI/UX Designer']
-         compatibility_reasoning: While the existing Python developers can handle the backend APIs, AI integrations, and data processing, a dedicated Frontend React Developer is essential for building the interactive web interface. Additionally, a UI/UX Designer is critical for structuring complex legal workflows and document review interfaces into an intuitive, user-friendly experience.
+         recommendation_summary: The team requires frontend and design expertise to transform their Python-based backend into a functional, user-friendly AI legal assistant. Adding a React developer and UI/UX designer will ensure the application is both intuitive and visually appealing for end users.
+         missing_skills: ['React', 'JavaScript', 'TypeScript', 'UI/UX Design', 'Figma', 'Tailwind CSS']
+         suggested_roles: ['Frontend Engineer', 'UI/UX Designer']
+         compatibility_reasoning: Since the team already has robust backend Python development covered, bringing in frontend and design specialists creates a well-rounded product team. The Frontend Engineer will bridge the gap between the Python backend and the user interface, while the UI/UX Designer will ensure complex legal information is presented clearly and accessibly.
     [PASS] Successfully routed to team_agent with valid structured result.
 
+[4] Running: Ambiguous / Greeting Test (Unclear Domain)
+    Message: "Hello! What's up?..."
+    Thread ID: test-route-d672ee70
+    -> Orchestrator Task Type Decision : unclear
+    -> Orchestrator Reasoning          : The user input is a standard generic greeting ('Hello! What's up?') and does not describe a project submission, a hackathon integrity risk, or team composition needs. Therefore, it must be classified as unclear.
+    -> Landed at Agent Node            : orchestrator
+    -> Requires Human Approval         : False
+    -> Agent Structured Final Result   :
+         status: unclear
+         message: Your request is too vague or does not match a specialist domain. Please clarify your goal.
+         reasoning: The user input is a standard generic greeting ('Hello! What's up?') and does not describe a project submission, a hackathon integrity risk, or team composition needs. Therefore, it must be classified as unclear.
+    [PASS] Successfully routed to orchestrator with valid structured result.
+
 ======================================================================
-  ALL 3 ROUTING TESTS PASSED SUCCESSFULLY!
+  ALL 4 ROUTING TESTS PASSED SUCCESSFULLY!
 ======================================================================
 ```
 

@@ -48,8 +48,17 @@ strict 20 RPM free-tier limits of preview flash models while maintaining
 high reasoning fidelity across orchestrator and specialist agent nodes.
 
 ### 2026-08-22 — Orchestrator Routing via Pydantic `RouteDecision`
-Orchestrator enforces structured schema (`Literal["submission", "risk", "team"]`
+Orchestrator enforces structured schema (`Literal["submission", "risk", "team", "unclear"]`
 with reasoning string). This guarantees deterministic conditional routing in
 `route_to_agent()` while preserving full LLM semantic classification power.
 
+### 2026-08-22 — Orchestrator Ambiguity Hardening: Explicit `unclear` Route
+Added `unclear` as a 4th routing target in `RouteDecision` and `route_to_agent()`.
+Previously, the orchestrator hallucinated/rationalized routing vague messages (like
+greetings or unspecific queries) to `submission_agent`. The orchestrator prompt now
+strictly mandates `unclear` if input does not explicitly match a specialist domain,
+short-circuiting the graph directly to `END` with a clarification request rather than
+propagating unspecific context to specialist agents.
+
 <!-- Add new entries below this line, newest at the bottom -->
+
