@@ -11,8 +11,8 @@ wrapper. Frontend in React, backend in FastAPI.
 still work? If yes, it doesn't belong in the demo.
 
 ## Current phase
-Phase 0 — scaffolding. See `PROGRESS.md` for exact live status; that file
-is the source of truth, not this one.
+Phase 9 — **Project Complete**. All 9 phases built and verified. See `PROGRESS.md`
+for checkpoint verification log and `FAILURE_LOG.md` for honest failure audit.
 
 ## Tech stack (locked — do not change without updating this file AND DECISIONS.md)
 
@@ -73,3 +73,35 @@ Every new agent session (especially after a login/quota switch) MUST:
 2. State its understanding of current status before writing any code.
 3. Run `git log --oneline -20` and `git status` to confirm what's actually
    on disk matches what `PROGRESS.md` claims.
+
+---
+
+## Final State (as of Phase 9 completion)
+
+### Agents — All Real (Not Stubs)
+| Agent | File | Status | LLM-Dependent |
+|-------|------|--------|----------------|
+| Orchestrator | `backend/ai/agents/orchestrator_agent.py` | ✅ Real — structured intent classification via Gemini | Yes — routes on semantic meaning |
+| Submission Analyzer | `backend/ai/agents/submission_agent.py` | ✅ Real — scores + ChromaDB novelty assessment | Yes — generates scores and analysis |
+| Risk Detector | `backend/ai/agents/risk_agent.py` | ✅ Real — anomaly classification + human gate | Yes — classifies risk severity |
+| Team Matcher | `backend/ai/agents/team_agent.py` | ✅ Real — ChromaDB skill matching + recommendations | Yes — generates compatibility reasoning |
+| Human Approval | `backend/ai/agents/human_approval_node.py` | ✅ Real — `interrupt_before` gate with approve/reject | No — pure state mutation |
+
+### Tools — All Wired to ChromaDB
+| Tool | File | Collection |
+|------|------|------------|
+| `index_submission` | `submission_tools.py` | `submissions` |
+| `find_similar_submissions` | `submission_tools.py` | `submissions` |
+| `index_participant_skills` | `team_tools.py` | `participant_skills` |
+| `find_matching_participants` | `team_tools.py` | `participant_skills` |
+
+### Seed Data
+- **16 submissions** across 8 domains (EdTech, DeFi, HealthTech, DevTools, Sustainability, LegalTech, Gaming, Security)
+- **10 participants** with diverse skill bios (frontend, backend, ML, security, design, mobile, blockchain)
+- Embeddings: `all-MiniLM-L6-v2` (384-dim, local ONNX inference)
+
+### Known Limitations
+1. **Routing is probabilistic** — borderline inputs may classify differently across runs; the `unclear` escape hatch mitigates but doesn't eliminate this.
+2. **ChromaDB is single-instance** — adequate for demo; production needs distributed mode or a managed vector DB for >1000 concurrent queries.
+3. **No authentication** — the demo has no user login or role-based access control; anyone with the URL can approve/reject risk findings.
+

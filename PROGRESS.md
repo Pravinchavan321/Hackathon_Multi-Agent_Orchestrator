@@ -4,38 +4,60 @@
 > The "In progress" section is what a new session should read FIRST.
 
 ## Last updated
-2026-08-22 — Phase 9 Part 1 complete (Core React frontend UI built with Vite + TailwindCSS: `DemoPage.jsx`, `AIOrchestrator.jsx`, `AIActivityTimeline.jsx`, `AIResultPanel.jsx`, `AIApprovalModal.jsx`, `AIStatusBadge.jsx`, and `useAgentStream.js`; all 6 integration scenarios passing).
+2026-08-22 — **PROJECT COMPLETE**. All 9 phases built, tested, and documented. Phase 9 Part 2 finalized with `FAILURE_LOG.md`, `DEMO_SCRIPT.md`, `ArchitectureDiagram.jsx`, and final documentation sync.
 
 ## Last verified working state
-LangGraph StateGraph with conditional specialist routing, ChromaDB semantic vector search, native human-in-the-loop interrupt gate before `human_approval_node`, end-to-end structured logging with correlation IDs, and complete React frontend single-page demo UI connected to real backend endpoints and WebSockets. All frontend and backend test suites passing 100%.
+Full-stack multi-agent hackathon orchestrator: LangGraph StateGraph with conditional specialist routing (4 agents), ChromaDB semantic vector search (16 submissions + 10 participants), native human-in-the-loop interrupt gate, end-to-end structured logging with LangSmith tracing, and React frontend demo UI with live WebSocket streaming. All test suites green.
 
 ---
 
 ## ✅ Done
-- [x] Docker compose (mongo/redis/chroma)
-- [x] FastAPI skeleton + /api/health (running on 8080 due to ChromaDB conflict on 8000)
-- [x] React skeleton fetching /api/health
-- [x] Single raw LLM call via /api/ai/ping (with 5-key fallback support)
-- [x] 2-node LangGraph with Mongo checkpointing (prove persistence works)
-- [x] WebSocket transport layer verified (lifecycle, intervals, cleanup)
-- [x] Phase 5: Multi-agent conditional routing LangGraph with 4 nodes (orchestrator, submission_agent, risk_agent, team_agent) + structured Pydantic outputs
-- [x] Phase 6: Seed script (16 realistic submissions with overlapping concepts, 10 participants with varied skill bios)
-- [x] Phase 6: ChromaDB tools (`index_submission`, `find_similar_submissions`, `index_participant_skills`, `find_matching_participants`) using local SentenceTransformer embeddings
-- [x] Phase 6: Specialist agents integrated with semantic vector retrieval (`novelty_assessment`, `similar_submissions`, `matched_participants`)
-- [x] Phase 7: Human-in-the-loop interrupt on destructive risk action (`interrupt_before=["human_approval"]`, `needs_approval` conditional edge)
-- [x] Phase 7: Approval and rejection REST endpoints (`GET /api/ai/tasks/{thread_id}/pending`, `POST /api/ai/tasks/{thread_id}/approve`)
-- [x] Phase 8: LangSmith tracing configured (`LANGCHAIN_PROJECT=hackathon-orchestrator`) and exported to environment
-- [x] Phase 8: structlog coverage completed (request correlation middleware `request_id`, `thread_id` contextvars, tool call entry/exit, router query/decision logs)
-- [x] Phase 9 Part 1: Core frontend demo UI (`DemoPage.jsx`, `AIOrchestrator.jsx`, `AIActivityTimeline.jsx`, `AIResultPanel.jsx`, `AIApprovalModal.jsx`, `AIStatusBadge.jsx`)
+- [x] Phase 1: Docker Compose infra (MongoDB, Redis, ChromaDB) + FastAPI skeleton + React skeleton
+- [x] Phase 2: Single raw LLM call via `/api/ai/ping` (Gemini with 5-key rotation)
+- [x] Phase 3: 2-node LangGraph with MongoDBSaver checkpointing (persistence + isolation verified)
+- [x] Phase 4: WebSocket transport layer (`astream_events` v2, lifecycle, intervals, cleanup)
+- [x] Phase 5: Multi-agent conditional routing (orchestrator → submission/risk/team/unclear) with structured Pydantic outputs
+- [x] Phase 6: ChromaDB semantic tools + seed script (16 submissions, 10 participants) + specialist agent vector integration
+- [x] Phase 7: Human-in-the-loop interrupt gate (`interrupt_before=["human_approval"]`, approve/reject endpoints)
+- [x] Phase 8: LangSmith tracing (`hackathon-orchestrator` project) + structlog coverage (request_id, thread_id, node/tool telemetry)
+- [x] Phase 9 Part 1: Core frontend demo UI (6 components + WebSocket hook + API helpers)
+- [x] Phase 9 Part 2: `FAILURE_LOG.md`, `DEMO_SCRIPT.md`, `ArchitectureDiagram.jsx`, final docs sync
 
-## 🚧 In progress (READ THIS BEFORE CONTINUING)
-- Phase 9 Part 2: Final UI polish, architecture diagram export, and submission artifacts
+## ✅ Project Complete
 
-## ⬜ Not started
-- [ ] Architecture diagram exported (1 page)
-- [ ] Failure log written (ongoing — add entries as things break)
+No items in progress. No items not started.
 
+---
 
+### How to Start from Scratch
+
+```bash
+# 1. Start infrastructure
+docker compose up -d
+
+# 2. Install backend dependencies
+pip install -r backend/requirements.txt
+
+# 3. Configure environment
+cp backend/.env.example backend/.env
+# Edit backend/.env — add your GEMINI_API_KEY_1 (required) and LANGCHAIN_API_KEY (optional)
+
+# 4. Seed ChromaDB vector database
+python -m backend.scripts.seed
+
+# 5. Start backend (port 8080)
+python -m uvicorn backend.main:app --port 8080
+
+# 6. Install frontend dependencies
+cd frontend && npm install
+
+# 7. Configure frontend environment
+cp .env.example .env
+
+# 8. Start frontend dev server
+npm run dev
+# → Open http://localhost:5173
+```
 
 
 

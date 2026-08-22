@@ -4,6 +4,7 @@ import { AIOrchestrator } from "../components/AIOrchestrator";
 import { AIActivityTimeline } from "../components/AIActivityTimeline";
 import { AIResultPanel } from "../components/AIResultPanel";
 import { AIApprovalModal } from "../components/AIApprovalModal";
+import { ArchitectureDiagram } from "../components/ArchitectureDiagram";
 import { useAgentStream } from "../hooks/useAgentStream";
 import { getPendingStatus } from "../api/aiAPI";
 
@@ -13,6 +14,7 @@ export function DemoPage() {
   const [finalResult, setFinalResult] = useState(null);
   const [pendingApproval, setPendingApproval] = useState(false);
   const [riskResult, setRiskResult] = useState(null);
+  const [showArchitecture, setShowArchitecture] = useState(false);
 
   // Live WebSocket streaming hook
   const { events, streaming } = useAgentStream(threadId);
@@ -124,6 +126,13 @@ export function DemoPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowArchitecture((prev) => !prev)}
+            className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-xs font-medium text-gray-300 transition"
+          >
+            {showArchitecture ? "Hide Architecture" : "Show Architecture"}
+          </button>
           <AIStatusBadge />
         </div>
       </header>
@@ -141,6 +150,13 @@ export function DemoPage() {
           <AIResultPanel result={finalResult} agentType={agentType} pendingApproval={pendingApproval} />
         </div>
       </main>
+
+      {/* Architecture Diagram (toggle) */}
+      {showArchitecture && (
+        <section className="max-w-7xl w-full mx-auto px-4 sm:px-6 pb-6">
+          <ArchitectureDiagram />
+        </section>
+      )}
 
       {/* Human-in-the-Loop Interrupt Approval Modal */}
       <AIApprovalModal
