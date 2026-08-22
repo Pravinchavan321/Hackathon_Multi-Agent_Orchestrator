@@ -64,15 +64,15 @@ class HackathonAgentState(TypedDict):
 
 ## Routing logic (orchestrator_node -> specialist)
 
-| task_type | routes to |
-|---|---|
-| `organizer.*` | `organizer_agent_node` |
-| `submission.*` | `submission_agent_node` |
-| `risk.*` | `risk_agent_node` |
-| `team.*` | `team_agent_node` |
+| task_type | routes to | description |
+|---|---|---|
+| `submission` | `submission_agent` | Project evaluation, scoring (innovation, technical, completeness) |
+| `risk` | `risk_agent` | Anomaly detection, suspicious voting patterns, collusion, plagiarism |
+| `team` | `team_agent` | Skill gap analysis, teammate recommendations, role matching |
 
 `route_to_agent()` reads `state["task_type"]`, set by the orchestrator's
-own LLM call reasoning over the incoming NL goal — not a keyword match.
+structured output LLM call reasoning over the incoming goal — not a keyword match.
+
 
 ## Human-in-the-loop
 

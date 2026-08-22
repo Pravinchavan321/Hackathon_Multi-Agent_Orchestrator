@@ -1,4 +1,9 @@
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+_ROOT_DIR = _BACKEND_DIR.parent
 
 class Settings(BaseSettings):
     MONGO_URI: str = "mongodb://localhost:27017"
@@ -8,7 +13,7 @@ class Settings(BaseSettings):
     CHROMA_PORT: int = 8000
     AI_PROVIDER: str = "google"
     AI_API_KEY: str = ""
-    AI_MODEL: str = "gemini-flash-latest"
+    AI_MODEL: str = "gemini-flash-lite-latest"
     AI_ENABLED: bool = True
     LOG_LEVEL: str = "INFO"
     APP_ENV: str = "development"
@@ -16,6 +21,15 @@ class Settings(BaseSettings):
     LANGCHAIN_API_KEY: str = ""
     LANGCHAIN_PROJECT: str = "hackathon"
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(
+            str(_BACKEND_DIR / ".env.example"),
+            str(_ROOT_DIR / ".env"),
+            str(_BACKEND_DIR / ".env"),
+        ),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 settings = Settings()
+

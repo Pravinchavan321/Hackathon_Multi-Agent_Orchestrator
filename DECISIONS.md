@@ -41,4 +41,15 @@ Using LangGraph's native interrupt mechanism instead of app-level
 itself pauses; a REST call resumes it. Simpler and matches the brief's
 "handle destructive actions safely" constraint more literally.
 
+### 2026-08-22 — Model Selection: `gemini-flash-lite-latest`
+Set `AI_MODEL=gemini-flash-lite-latest` as primary default. It supports
+fast structured outputs via `with_structured_output()` and avoids the
+strict 20 RPM free-tier limits of preview flash models while maintaining
+high reasoning fidelity across orchestrator and specialist agent nodes.
+
+### 2026-08-22 — Orchestrator Routing via Pydantic `RouteDecision`
+Orchestrator enforces structured schema (`Literal["submission", "risk", "team"]`
+with reasoning string). This guarantees deterministic conditional routing in
+`route_to_agent()` while preserving full LLM semantic classification power.
+
 <!-- Add new entries below this line, newest at the bottom -->

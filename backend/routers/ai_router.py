@@ -43,22 +43,29 @@ async def ping(request: PingRequest):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-# ── Phase 3: graph-test endpoint ────────────────────────────────────
+# ── Phase 3 & 5: orchestrate & graph-test endpoints ─────────────────
 
-class GraphTestRequest(BaseModel):
-    message: str = "Hello from graph test"
+class OrchestrateRequest(BaseModel):
+    goal: str = ""
+    message: str = ""
     thread_id: str = ""
+    hackathon_id: str | None = None
+
+    def get_input_text(self) -> str:
+        return self.goal or self.message or "Evaluate hackathon status"
 
 
+@router.post("/orchestrate")
 @router.post("/graph-test")
-async def graph_test(request: GraphTestRequest):
+async def orchestrate(request: OrchestrateRequest):
     try:
         # Auto-generate a thread_id if not provided
         thread_id = request.thread_id or str(uuid.uuid4())
+        input_text = request.get_input_text()
 
         log.info(
-            "Graph test requested",
-            message=request.message,
+            "Graph orchestration requested",
+            input_text=input_text,
             thread_id=thread_id,
         )
 
@@ -67,9 +74,9 @@ async def graph_test(request: GraphTestRequest):
         # Invoke the graph with the user message and thread_id for checkpointing
         result = await graph.ainvoke(
             {
-                "messages": [HumanMessage(content=request.message)],
+                "messages": [HumanMessage(content=input_text)],
                 "task_type": "general",
-                "hackathon_id": None,
+                "hackathon_id": request.hackathon_id,
                 "current_agent": "",
                 "tool_results": {},
                 "plan": None,
@@ -89,23 +96,29 @@ async def graph_test(request: GraphTestRequest):
 
         response = {
             "thread_id": thread_id,
+            "task_type": result.get("task_type"),
+            "current_agent": result.get("current_agent"),
+            "requires_human_approval": result.get("requires_human_approval", False),
+            "plan": result.get("plan"),
+            "final_result": result.get("final_result"),
             "message_count": len(serialized_messages),
             "messages": serialized_messages,
-            "current_agent": result.get("current_agent"),
-            "final_result": result.get("final_result"),
         }
 
         log.info(
-            "Graph test completed",
+            "Graph orchestration completed",
             thread_id=thread_id,
+            task_type=result.get("task_type"),
+            current_agent=result.get("current_agent"),
             message_count=len(serialized_messages),
         )
 
         return response
 
     except AIOfflineError as e:
-        log.warning("AI Engine Offline during graph test", error=str(e))
+        log.warning("AI Engine Offline during orchestration", error=str(e))
         raise HTTPException(status_code=503, detail={"status": "AI Engine Offline"})
     except Exception as e:
-        log.error("Unexpected error in graph test", error=str(e), exc_info=True)
+        log.error("Unexpected error in orchestration", error=str(e), exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+

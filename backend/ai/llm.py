@@ -12,6 +12,10 @@ class OfflineLLMProxy:
     def invoke(self, *args, **kwargs):
         raise AIOfflineError("AI Engine Offline")
 
+    def with_structured_output(self, *args, **kwargs):
+        return self
+
+
 def _create_llm():
     if not settings.AI_ENABLED:
         log.error("AI is disabled via AI_ENABLED=false")
@@ -27,6 +31,7 @@ def _create_llm():
     primary_llm = ChatGoogleGenerativeAI(
         model=settings.AI_MODEL,
         google_api_key=keys[0],
+        max_retries=1,
     )
     
     if len(keys) > 1:
@@ -34,6 +39,7 @@ def _create_llm():
             ChatGoogleGenerativeAI(
                 model=settings.AI_MODEL,
                 google_api_key=key,
+                max_retries=1,
             ) for key in keys[1:]
         ]
         log.info(f"Instantiated ChatGoogleGenerativeAI client with {len(fallback_llms)} fallback keys")

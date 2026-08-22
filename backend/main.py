@@ -12,7 +12,7 @@ from backend.core.logging import log
 from backend.db.mongo import connect_mongo, close_mongo
 from backend.db.redis_client import connect_redis, close_redis
 from backend.db.chroma_client import connect_chroma
-from backend.routers import health_router, ai_router
+from backend.routers import health_router, ai_router, ws_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,3 +60,4 @@ app.add_middleware(
 # Mount routers
 app.include_router(health_router.router)
 app.include_router(ai_router.router)
+app.include_router(ws_router.router)

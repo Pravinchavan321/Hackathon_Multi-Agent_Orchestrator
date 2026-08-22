@@ -3,8 +3,11 @@ from langgraph.checkpoint.mongodb import MongoDBSaver
 from pymongo import MongoClient
 
 from backend.ai.graph.state import HackathonAgentState
+from backend.ai.graph.routing import route_to_agent
 from backend.ai.agents.orchestrator_agent import orchestrator_node
 from backend.ai.agents.submission_agent import submission_agent_node
+from backend.ai.agents.risk_agent import risk_agent_node
+from backend.ai.agents.team_agent import team_agent_node
 from backend.core.config import settings
 from backend.core.logging import log
 
@@ -30,29 +33,48 @@ def _build_checkpointer():
 
 def get_compiled_graph():
     """
-    Build and compile the 2-node LangGraph with MongoDB checkpointing.
+    Build and compile the multi-agent LangGraph with conditional routing and MongoDB checkpointing.
     Cached after first call so every request reuses the same graph instance.
 
-    Phase 3 topology:
-        START -> orchestrator -> submission_agent -> END
+    Phase 5 topology:
+        START -> orchestrator
+                     |---> (conditional: 'submission') -> submission_agent -> END
+                     |---> (conditional: 'risk')       -> risk_agent       -> END
+                     |---> (conditional: 'team')       -> team_agent       -> END
     """
     global _compiled_graph
 
     if _compiled_graph is not None:
         return _compiled_graph
 
-    log.info("Building LangGraph (Phase 3: 2-node linear graph)...")
+    log.info("Building LangGraph (Phase 5: Multi-Agent conditional routing graph)...")
 
     builder = StateGraph(HackathonAgentState)
 
-    # Add the two nodes
+    # Add agent nodes
     builder.add_node("orchestrator", orchestrator_node)
     builder.add_node("submission_agent", submission_agent_node)
+    builder.add_node("risk_agent", risk_agent_node)
+    builder.add_node("team_agent", team_agent_node)
 
-    # Linear edges: START -> orchestrator -> submission_agent -> END
+    # Entry point is the master orchestrator
     builder.set_entry_point("orchestrator")
-    builder.add_edge("orchestrator", "submission_agent")
+
+    # Conditional routing from orchestrator to specialist agents
+    builder.add_conditional_edges(
+        "orchestrator",
+        route_to_agent,
+        {
+            "submission": "submission_agent",
+            "risk": "risk_agent",
+            "team": "team_agent",
+        },
+    )
+
+    # Specialist agents complete their tasks and transition to END
     builder.add_edge("submission_agent", END)
+    builder.add_edge("risk_agent", END)
+    builder.add_edge("team_agent", END)
 
     # Compile with MongoDB checkpointer
     checkpointer = _build_checkpointer()
@@ -60,3 +82,4 @@ def get_compiled_graph():
 
     log.info("LangGraph compiled successfully with MongoDBSaver checkpointer")
     return _compiled_graph
+
