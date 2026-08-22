@@ -14,17 +14,18 @@ Deploy Frontend on **Vercel** + Backend on **Render / Railway**.
 4. **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
 5. **Environment Variables**:
    ```env
+   # Mandatory:
    AI_API_KEY=your_gemini_api_key
-   AI_MODEL=gemini-flash-lite-latest
-   CORS_ORIGINS=*
+
+   # Optional (Recommended for state persistence & vector storage):
+   MONGO_URI=mongodb+srv://admin:<password>@cluster0.abcde.mongodb.net/hackathon_db?retryWrites=true&w=majority
    CHROMA_HOST=embedded
-   MONGO_URI=your_mongodb_atlas_uri_or_local
-   REDIS_URL=your_upstash_redis_uri_or_local
-   LANGCHAIN_TRACING_V2=true
-   LANGCHAIN_API_KEY=your_langsmith_key
-   LANGCHAIN_PROJECT=hackathon-orchestrator
+   CORS_ORIGINS=*
+
+   # Optional (Redis is NOT required - runs in standalone mode if omitted):
+   REDIS_URL=
    ```
-   *(Note: Setting `CHROMA_HOST=embedded` automatically uses local SQLite persistence in `./chroma_data`, meaning you don't even need a separate Chroma server!).*
+   *(Note: Setting `CHROMA_HOST=embedded` uses SQLite persistence in `./chroma_data` with automatic startup seeding, meaning you don't need a separate vector server or Redis!).*
 
 ---
 
