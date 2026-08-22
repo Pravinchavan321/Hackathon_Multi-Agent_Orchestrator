@@ -31,5 +31,9 @@ Update `PROGRESS.md` — move items from "In progress" to "Done", note any
 blocker, and paste real command output into the checkpoint log section.
 Commit to git. Do not end a session without both.
 
+## Team Contribution
+
+This project is being developed as a collaborative multi-agent AI system for automating hackathon management, including participant management, evaluation, orchestration, and workflow automation.
+
 
 **Note:** FastAPI runs on port 8080 locally due to a port conflict with ChromaDB on port 8000.
