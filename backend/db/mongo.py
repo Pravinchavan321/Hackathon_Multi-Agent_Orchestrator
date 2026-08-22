@@ -2,10 +2,14 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from backend.core.config import settings
 from backend.core.logging import log
-
 from backend.models import User, Submission, AITask, AIInsight, AIRisk, AIActivityLog
 
+# Compatibility patch for motor 3.7+ and beanie metadata handling
+if not hasattr(AsyncIOMotorClient, "append_metadata"):
+    AsyncIOMotorClient.append_metadata = lambda self, *args, **kwargs: None
+
 _client = None
+
 
 async def connect_mongo():
     global _client
@@ -25,6 +29,7 @@ async def connect_mongo():
     except Exception as e:
         log.error("Failed to connect to MongoDB", error=str(e))
         raise
+
 
 async def close_mongo():
     global _client
