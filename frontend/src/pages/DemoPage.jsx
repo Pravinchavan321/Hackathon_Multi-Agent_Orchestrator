@@ -17,7 +17,7 @@ export function DemoPage() {
   const [showArchitecture, setShowArchitecture] = useState(false);
 
   // Live WebSocket streaming hook
-  const { events, streaming } = useAgentStream(threadId);
+  const { events, streaming, clearEvents } = useAgentStream(threadId);
   const pollIntervalRef = useRef(null);
 
   // Check pending status on backend for interrupt gates
@@ -72,6 +72,19 @@ export function DemoPage() {
     }, 2000);
   };
 
+  const handleReset = () => {
+    setThreadId(null);
+    setAgentType(null);
+    setFinalResult(null);
+    setPendingApproval(false);
+    setRiskResult(null);
+    clearEvents();
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  };
+
   // Stop polling when streaming completes and do one final check
   useEffect(() => {
     if (!streaming && threadId) {
@@ -108,52 +121,74 @@ export function DemoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Header Bar */}
-      <header className="border-b border-gray-800 bg-gray-900/60 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-950 text-gray-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white antialiased">
+      {/* Top Navigation Header */}
+      <header className="border-b border-gray-800/80 bg-gray-900/70 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-8 py-3 flex items-center justify-between shadow-lg shadow-black/20">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-900/50">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-black text-base shadow-lg shadow-indigo-900/50 ring-2 ring-white/10">
             ⬡
           </div>
           <div>
-            <h1 className="text-base font-bold text-gray-100 tracking-tight">
-              Hackathon Multi-Agent Orchestrator
-            </h1>
-            <p className="text-[11px] text-gray-400">
-              LangGraph StateGraph • ChromaDB Embeddings • Human-in-the-Loop Interrupt Gate
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm sm:text-base font-bold text-gray-100 tracking-tight">
+                Hackathon Multi-Agent Orchestrator
+              </h1>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 border border-indigo-700/50 text-indigo-300 font-mono font-semibold hidden md:inline">
+                LangGraph StateGraph
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-400 hidden sm:block">
+              Semantic Search (ChromaDB) • MongoDB Checkpoints • Human-in-the-Loop Interrupt Gate
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          {threadId && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="px-3 py-1.5 rounded-xl bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-xs font-medium text-gray-300 hover:text-white transition cursor-pointer"
+            >
+              Reset State
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setShowArchitecture((prev) => !prev)}
-            className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-xs font-medium text-gray-300 transition"
+            className="px-3 py-1.5 rounded-xl bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-xs font-medium text-gray-300 hover:text-white transition cursor-pointer flex items-center gap-1.5"
           >
-            {showArchitecture ? "Hide Architecture" : "Show Architecture"}
+            <span>{showArchitecture ? "Hide" : "Show"} Architecture</span>
+            <span className="text-gray-400">{showArchitecture ? "▲" : "▼"}</span>
           </button>
+
           <AIStatusBadge />
         </div>
       </header>
 
       {/* Main Two-Column Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Orchestrator Input + Live Activity Timeline */}
         <div className="lg:col-span-7 space-y-6">
-          <AIOrchestrator onTaskStarted={handleTaskStarted} />
+          <AIOrchestrator onTaskStarted={handleTaskStarted} onReset={handleReset} />
           <AIActivityTimeline threadId={threadId} events={events} streaming={streaming} />
         </div>
 
         {/* Right Column: Structured Analytical Result Panel */}
         <div className="lg:col-span-5 sticky top-20">
-          <AIResultPanel result={finalResult} agentType={agentType} pendingApproval={pendingApproval} />
+          <AIResultPanel
+            result={finalResult}
+            agentType={agentType}
+            pendingApproval={pendingApproval}
+            streaming={streaming}
+          />
         </div>
       </main>
 
-      {/* Architecture Diagram (toggle) */}
+      {/* Architecture Diagram Collapsible Section */}
       {showArchitecture && (
-        <section className="max-w-7xl w-full mx-auto px-4 sm:px-6 pb-6">
+        <section className="max-w-7xl w-full mx-auto px-4 sm:px-8 pb-8 animate-fadeIn">
           <ArchitectureDiagram />
         </section>
       )}
@@ -170,4 +205,3 @@ export function DemoPage() {
 }
 
 export default DemoPage;
-
