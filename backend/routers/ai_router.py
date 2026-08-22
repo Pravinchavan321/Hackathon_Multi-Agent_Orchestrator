@@ -48,13 +48,14 @@ async def ping(request: PingRequest):
 # ── Phase 3 & 5: orchestrate & graph-test endpoints ─────────────────
 
 class OrchestrateRequest(BaseModel):
-    goal: str = ""
-    message: str = ""
-    thread_id: str = ""
+    goal: str | None = None
+    message: str | None = None
+    thread_id: str | None = None
     hackathon_id: str | None = None
 
     def get_input_text(self) -> str:
-        return self.goal or self.message or "Evaluate hackathon status"
+        text = (self.goal or self.message or "").strip()
+        return text if text else "Evaluate hackathon status"
 
 
 @router.post("/orchestrate")
@@ -130,7 +131,7 @@ async def orchestrate(request: OrchestrateRequest):
 
 class ApproveRequest(BaseModel):
     decision: str = "approve"  # "approve" | "reject"
-    note: str = ""
+    note: str | None = ""
 
 
 @router.get("/tasks/{thread_id}/pending")
