@@ -4,10 +4,10 @@
 > The "In progress" section is what a new session should read FIRST.
 
 ## Last updated
-2026-08-22 — Phase 8 complete (LangSmith tracing configuration verified with project `hackathon-orchestrator`; structlog coverage closed with request correlation middleware `request_id` and `thread_id` contextvars across all nodes, tools, routers, and handlers).
+2026-08-22 — Phase 9 Part 1 complete (Core React frontend UI built with Vite + TailwindCSS: `DemoPage.jsx`, `AIOrchestrator.jsx`, `AIActivityTimeline.jsx`, `AIResultPanel.jsx`, `AIApprovalModal.jsx`, `AIStatusBadge.jsx`, and `useAgentStream.js`; all 6 integration scenarios passing).
 
 ## Last verified working state
-LangGraph StateGraph with conditional specialist routing, ChromaDB semantic vector search, native human-in-the-loop interrupt gate before `human_approval_node`, and end-to-end structured logging with correlation IDs (`request_id`, `thread_id`, `node`, `tool`). All tests passed with 100% success.
+LangGraph StateGraph with conditional specialist routing, ChromaDB semantic vector search, native human-in-the-loop interrupt gate before `human_approval_node`, end-to-end structured logging with correlation IDs, and complete React frontend single-page demo UI connected to real backend endpoints and WebSockets. All frontend and backend test suites passing 100%.
 
 ---
 
@@ -26,14 +26,15 @@ LangGraph StateGraph with conditional specialist routing, ChromaDB semantic vect
 - [x] Phase 7: Approval and rejection REST endpoints (`GET /api/ai/tasks/{thread_id}/pending`, `POST /api/ai/tasks/{thread_id}/approve`)
 - [x] Phase 8: LangSmith tracing configured (`LANGCHAIN_PROJECT=hackathon-orchestrator`) and exported to environment
 - [x] Phase 8: structlog coverage completed (request correlation middleware `request_id`, `thread_id` contextvars, tool call entry/exit, router query/decision logs)
+- [x] Phase 9 Part 1: Core frontend demo UI (`DemoPage.jsx`, `AIOrchestrator.jsx`, `AIActivityTimeline.jsx`, `AIResultPanel.jsx`, `AIApprovalModal.jsx`, `AIStatusBadge.jsx`)
 
 ## 🚧 In progress (READ THIS BEFORE CONTINUING)
-- Phase 9: Frontend components + live AIActivityTimeline demo polish
+- Phase 9 Part 2: Final UI polish, architecture diagram export, and submission artifacts
 
 ## ⬜ Not started
-- [ ] Frontend: AIOrchestrator input + live AIActivityTimeline
 - [ ] Architecture diagram exported (1 page)
 - [ ] Failure log written (ongoing — add entries as things break)
+
 
 
 
@@ -372,9 +373,29 @@ $ python -m backend.tests.test_human_approval
 4. **Tool Call Logging:** Added explicit `Tool called: <tool_name>` with `query_length` and `n_results`, and `Tool completed: <tool_name>` with `matches_count` and `top_match` in `submission_tools.py` and `team_tools.py`.
 5. **Conditional Edge Routing Logging:** Added router event logs in `route_to_agent` and `needs_approval` in `routing.py`.
 
+### Checkpoint 9: Core Frontend UI Integration (Phase 9 Part 1)
+```
+$ python -m backend.tests.test_frontend_integration
+
+===========================================================================
+  PHASE 9 PART 1: FRONTEND API & INTEGRATION VERIFICATION
+===========================================================================
+[PASS] Check 1: AIStatusBadge /api/health -> Status OK (Online)
+[PASS] Check 2: Submission flow completed (Agent: submission_agent, Similar Submissions: 3, Innovation: 5.0/10)
+[PASS] Check 3A: Risk HIGH paused at interrupt gate before human_approval (Modal Visible: True)
+[PASS] Check 3B: Human Approval successfully resumed execution (Current Agent: human_approval)
+[PASS] Check 4: Dismissed as False Positive marked state as rejected_by_human (Execution Halted)
+[PASS] Check 5: Team flow matched 3 candidate profiles from ChromaDB
+[PASS] Check 6: Ambiguous greeting routed to unclear handler (Message: Your request is too vague or does not ma...)
+===========================================================================
+  ALL 6 FRONTEND INTEGRATION FLOWS VERIFIED SUCCESSFULLY!
+===========================================================================
+```
+
 ---
 
 ## Failure log
+
 
 
 
