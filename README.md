@@ -480,83 +480,10 @@ Recommended instruction:
 
 > Read `PROJECT_CONTEXT.md`, `PROGRESS.md`, and `DECISIONS.md` before doing anything else. Then explain your understanding of the current project state before proceeding.
 
-This helps prevent unnecessary architectural changes and keeps AI-assisted development aligned with existing project decisions.
+## After every work session
+Update `PROGRESS.md` — move items from "In progress" to "Done", note any
+blocker, and paste real command output into the checkpoint log section.
+Commit to git. Do not end a session without both.
 
----
 
-## 📋 After Every Development Session
-
-Update:
-
-```text
-PROGRESS.md
-```
-
-Move completed items from **In Progress** to **Done**.
-
-Record:
-
-* completed work
-* remaining work
-* blockers
-* validation results
-* important command output
-* next steps
-
-Then commit the changes:
-
-```bash
-git add .
-git commit -m "docs: update development progress"
-```
-
-A development session should end with both the implementation state and project documentation synchronized.
-
----
-
-## 🤝 Contributing
-
-Contributions should follow the project's existing architecture and technical decisions.
-
-Before implementing a feature:
-
-1. Read the project documentation.
-2. Check `PROGRESS.md`.
-3. Review `DECISIONS.md`.
-4. Understand the relevant architecture.
-5. Create a dedicated branch.
-6. Make focused changes.
-7. Test the changes.
-8. Update documentation when required.
-9. Commit with a meaningful message.
-10. Open a Pull Request.
-
----
-
-## 📌 Project Status
-
-The project is actively being developed as a **hackathon-oriented multi-agent AI orchestration system**.
-
-For the latest implementation status, always refer to:
-
-```text
-PROGRESS.md
-```
-
-For architectural decisions:
-
-```text
-DECISIONS.md
-```
-
-For the system design:
-
-```text
-ARCHITECTURE.md
-```
-
----
-
-## 📄 License
-
-Refer to the repository's license configuration for the applicable project license and usage terms.
+**Note:** FastAPI runs on port 8080 locally due to a port conflict with ChromaDB on port 8000.
