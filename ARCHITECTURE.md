@@ -16,19 +16,28 @@ React (Vite + Tailwind)
    |            LangGraph orchestrator graph
    |            (backend/ai/graph/build_graph.py)
    |                     |
-   |     +---------------+---------------+
-   |     |                               |
-   |     v                               v
-   | orchestrator_node             human_approval_node (Phase 7 interrupt_before)
-   |     |
+   |                     v
+   |              orchestrator_node
+   |                     |
    |     +--(conditional routing on task_type)---------+
    |     |          |            |                     |
    |     v          v            v                     v
-   | submission_  risk_agent_  team_agent_         END (if 'unclear')
-   | agent_node   node         node           (returns clarification request)
-   |     |          |            |
-   |     +----------+------------+
-   |                     |
+   | submission_  team_agent_  END (if 'unclear')  risk_agent_node
+   | agent_node   node         (returns guidance)      |
+   |     |          |                                  v
+   |     |          |                         needs_approval edge
+   |     |          |                             /         \
+   |     |          |           (approval_required)          (auto_complete)
+   |     |          |                   /                         \
+   |     |          |                  v                           |
+   |     |          |          human_approval_node                 |
+   |     |          |          [interrupt_before gate]             |
+   |     |          |                  |                           |
+   |     +----------+------------------+---------------------------+
+   |                                   |
+   |                                   v
+   |                                  END
+   |
    |             tool calls (backend/ai/tools/*.py - Phase 6)
    |                     |
    |     +---------------+----------------+
@@ -64,6 +73,8 @@ class HackathonAgentState(TypedDict):
 
 ## Routing logic (orchestrator_node -> specialist / short-circuit)
 
+### Top-Level Orchestrator Routing (`route_to_agent`)
+
 | task_type | routes to | description |
 |---|---|---|
 | `submission` | `submission_agent` | Project evaluation, scoring (innovation, technical, completeness) |
@@ -76,7 +87,12 @@ structured output LLM call reasoning over the incoming goal — not a keyword ma
 If the input is vague or does not clearly map to a specialist domain, it routes
 directly to `END` with a clarification payload in `final_result`.
 
+### Risk Agent Approval Gate (`needs_approval`)
 
+| condition | routes to | description |
+|---|---|---|
+| `state["requires_human_approval"] == True` | `human_approval` | High-risk action paused at `interrupt_before=["human_approval"]` waiting for reviewer decision |
+| `state["requires_human_approval"] == False` | `END` | Low/medium risk analysis completes immediately |
 
 ## Specialist Agent Tools (ChromaDB Vector Integration)
 
@@ -93,25 +109,23 @@ directly to `END` with a clarification payload in `final_result`.
 - **Submission Agent**: `{innovation_score, technical_score, completeness_score, summary, strengths, weaknesses, similar_submissions, novelty_assessment}`
 - **Risk Agent**: `{risk_level, category, description, evidence}`
 - **Team Agent**: `{recommendation_summary, missing_skills, suggested_roles, compatibility_reasoning, matched_participants}`
+- **Human Approval Override**: `{status: "rejected_by_human" | "approved", decision, note, original_risk}`
 
 ## Human-in-the-loop
 
-
-Any node that would perform a "destructive" action (mass message, publish
-result, reject a submission) sets `requires_human_approval = True` and the
-graph's conditional edge routes to `human_approval_node`, which is
-registered as an `interrupt_before` node. Execution pauses; resuming
-requires a REST call: `POST /api/ai/tasks/{task_id}/approve`.
+Any node that identifies a high-severity destructive action (e.g. `risk_level == "HIGH"`) sets `requires_human_approval = True`. The graph's conditional edge `needs_approval` routes execution toward `human_approval_node`, which is registered as an `interrupt_before` node in `builder.compile(interrupt_before=["human_approval"])`.
+1. LangGraph pauses execution right before `human_approval_node`.
+2. Reviewers inspect pending state via `GET /api/ai/tasks/{thread_id}/pending`.
+3. To approve: `POST /api/ai/tasks/{thread_id}/approve` with `{"decision": "approve"}` calls `graph.ainvoke(None)` to resume execution to `END`.
+4. To reject: `POST /api/ai/tasks/{thread_id}/approve` with `{"decision": "reject"}` calls `graph.aupdate_state()` with an override payload, ending the run without resuming destructive downstream actions.
 
 ## REST endpoints (mirrors original doc, trimmed to in-scope agents)
 
 ```
-POST /api/ai/orchestrate            -> starts a new graph run (NL goal)
-GET  /api/ai/tasks/{id}             -> task status + result
-POST /api/ai/tasks/{id}/approve     -> resumes an interrupted graph
-GET  /api/ai/insights/{hackathon_id}
-GET  /api/ai/risks/{hackathon_id}
-GET  /api/ai/status                 -> AI system online/offline
+POST /api/ai/orchestrate                    -> starts a new graph run (NL goal)
+GET  /api/ai/tasks/{thread_id}/pending      -> checks if task is paused at interrupt gate & returns pending payload
+POST /api/ai/tasks/{thread_id}/approve      -> human-in-the-loop decision: approve (resumes) or reject (overrides)
+GET  /api/ai/status                         -> AI system online/offline
 ```
 
 ## WebSocket endpoint
@@ -122,3 +136,4 @@ WS /ws/ai/tasks/{task_id}
 Streams `astream_events(..., version="v2")` output — node transitions,
 streamed LLM tokens, tool calls/results — serialized as JSON events for
 the frontend `AIActivityTimeline` component.
+

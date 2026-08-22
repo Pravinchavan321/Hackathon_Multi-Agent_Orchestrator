@@ -4,10 +4,10 @@
 > The "In progress" section is what a new session should read FIRST.
 
 ## Last updated
-2026-08-22 — Phase 6 complete (ChromaDB tools wired into Submission Agent and Team Agent, seed script with 16 submissions & 10 participants, semantic search and end-to-end node execution verified).
+2026-08-22 — Phase 7 complete (Human-in-the-loop interrupt gate with LangGraph `interrupt_before=["human_approval"]`, `needs_approval` conditional edge, `GET /api/ai/tasks/{thread_id}/pending`, and `POST /api/ai/tasks/{thread_id}/approve` approve/reject workflows verified).
 
 ## Last verified working state
-LangGraph StateGraph with dynamic conditional routing (`orchestrator` -> `submission_agent` | `risk_agent` | `team_agent` | `unclear` -> `END`) with ChromaDB semantic vector search tools (`find_similar_submissions`, `find_matching_participants`) active in submission and team agents. All 4 checks in `test_semantic_search.py`, `test_routing.py` (4/4 passed), and `test_graph_checkpoint.py` passed with 100% success.
+LangGraph StateGraph with conditional specialist routing, ChromaDB semantic vector search, and native human-in-the-loop interrupt gate before `human_approval_node`. High-risk flags pause execution at the gate; approve resumes execution via `ainvoke(None)` and reject terminates cleanly via `aupdate_state()`. All 6 checks in `test_human_approval.py`, plus full regression suites `test_graph_checkpoint.py`, `test_routing.py` (4/4 passed), and `test_semantic_search.py` passed with 100% success.
 
 ---
 
@@ -22,19 +22,19 @@ LangGraph StateGraph with dynamic conditional routing (`orchestrator` -> `submis
 - [x] Phase 6: Seed script (16 realistic submissions with overlapping concepts, 10 participants with varied skill bios)
 - [x] Phase 6: ChromaDB tools (`index_submission`, `find_similar_submissions`, `index_participant_skills`, `find_matching_participants`) using local SentenceTransformer embeddings
 - [x] Phase 6: Specialist agents integrated with semantic vector retrieval (`novelty_assessment`, `similar_submissions`, `matched_participants`)
+- [x] Phase 7: Human-in-the-loop interrupt on destructive risk action (`interrupt_before=["human_approval"]`, `needs_approval` conditional edge)
+- [x] Phase 7: Approval and rejection REST endpoints (`GET /api/ai/tasks/{thread_id}/pending`, `POST /api/ai/tasks/{thread_id}/approve`)
 
 ## 🚧 In progress (READ THIS BEFORE CONTINUING)
-- Phase 7: Human-in-the-loop interrupt on destructive risk action
-  - Wire `human_approval_node` with `interrupt_before`
-  - Implement approval/rejection endpoints: `POST /api/ai/tasks/{task_id}/approve`
+- Phase 8: LangSmith tracing & structlog observability polish
 
 ## ⬜ Not started
-- [ ] Human-in-the-loop interrupt on destructive action (Phase 7)
 - [ ] LangSmith tracing enabled
 - [ ] structlog wired into all agent nodes
 - [ ] Frontend: AIOrchestrator input + live AIActivityTimeline
 - [ ] Architecture diagram exported (1 page)
 - [ ] Failure log written (ongoing — add entries as things break)
+
 
 
 ---
@@ -291,9 +291,65 @@ $ python -m backend.tests.test_semantic_search
 ===========================================================================
 ```
 
+### Checkpoint 7: Human-in-the-Loop Interrupt & Approval (Phase 7)
+```
+$ python -m backend.tests.test_human_approval
+
+===========================================================================
+  PHASE 7: HUMAN-IN-THE-LOOP INTERRUPT & APPROVAL VERIFICATION
+===========================================================================
+
+--- [CHECK 1-4: High Risk Scenario -> Pause at Interrupt -> Human Approve] ---
+  [1] Starting orchestration on Thread ID: test-approval-high-502fc987
+      Orchestrator routed to: risk
+      Current agent reached : risk_agent
+      requires_human_approval: True
+
+  [2] Checking GET /api/ai/tasks/{thread_id}/pending...
+      pending_approval: True
+      next in graph   : ['human_approval']
+      [PASS] Verified graph paused at interrupt gate before human_approval node.
+
+  [3] Reviewing Pending Risk Assessment payload:
+      Risk Level : HIGH
+      Category   : vote_brigading
+      Description: An anomalous spike of 500 upvotes occurred for Team Alpha within a 2-minute timeframe, originating from brand-new IP addresses, indicating automated vote manipulation or bot activity.
+      Evidence   : 500 upvotes in 2 minutes from brand-new IP addresses for Team Alpha.
+
+  [4] Submitting Human Approval (POST /api/ai/tasks/{thread_id}/approve with 'approve')...
+      Status       : approved
+      Decision     : approve
+      Current Agent: human_approval
+      Note         : Verified bot IP cluster on Grafana dashboard. Flag approved.
+      [PASS] Graph resumed, completed execution, and is no longer pending.
+
+--- [CHECK 5: High Risk Scenario -> Pause at Interrupt -> Human Reject Override] ---
+  [5A] Starting orchestration on Thread ID: test-approval-reject-2b8587c8
+  [5B] Submitting Human Rejection (POST /api/ai/tasks/{thread_id}/approve with 'reject')...
+      Status       : rejected_by_human
+      Decision     : reject
+      Current Agent: human_approval_rejected
+      Final Result : {'status': 'rejected_by_human', 'decision': 'reject', 'note': 'False positive: Spurt of votes was caused by an official in-person booth showcase.', 'original_risk': {'risk_level': 'HIGH', 'category': 'vote_brigading', 'description': 'Detected an anomalous spike of 500 upvotes originating from brand-new IP addresses within an extremely short window of 2 minutes, indicating automated vote manipulation or bot activity.', 'evidence': '500 upvotes received in 2 minutes from brand-new IP addresses for Team Alpha.'}}
+      [PASS] Rejection correctly marked state as rejected_by_human and halted execution without resumption.
+
+--- [CHECK 6: Non-Risk Scenario -> Immediate Auto-Completion (No Gate)] ---
+  [6A] Starting orchestration on Thread ID: test-approval-low-83285c8f
+      Orchestrator routed to: submission
+      Current agent reached : submission_agent
+      requires_human_approval: False
+      pending_approval: False
+      next in graph   : []
+      [PASS] Non-risk task completed immediately with zero interrupt pause.
+
+===========================================================================
+  ALL 6 PHASE 7 HUMAN-IN-THE-LOOP APPROVAL CHECKS PASSED SUCCESSFULLY!
+===========================================================================
+```
+
 ---
 
 ## Failure log
+
 
 
 | Date | Issue | Root Cause | Fix |

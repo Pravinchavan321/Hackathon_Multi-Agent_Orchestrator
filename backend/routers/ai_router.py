@@ -117,8 +117,121 @@ async def orchestrate(request: OrchestrateRequest):
 
     except AIOfflineError as e:
         log.warning("AI Engine Offline during orchestration", error=str(e))
-        raise HTTPException(status_code=503, detail={"status": "AI Engine Offline"})
+# ── Phase 7: Human-in-the-Loop Interrupt & Approval Endpoints ───────
+
+class ApproveRequest(BaseModel):
+    decision: str = "approve"  # "approve" | "reject"
+    note: str = ""
+
+
+@router.get("/tasks/{thread_id}/pending")
+async def get_pending_task(thread_id: str):
+    """
+    Checks if a given thread_id is currently paused at a human-in-the-loop interrupt gate.
+    Returns the pending risk assessment and approval status.
+    """
+    try:
+        graph = get_compiled_graph()
+        config = {"configurable": {"thread_id": thread_id}}
+        state_snapshot = await graph.aget_state(config)
+
+        if not state_snapshot or not state_snapshot.values:
+            raise HTTPException(status_code=404, detail=f"Task thread '{thread_id}' not found")
+
+        is_pending = "human_approval" in (state_snapshot.next or ())
+
+        return {
+            "thread_id": thread_id,
+            "pending_approval": is_pending,
+            "next": list(state_snapshot.next or ()),
+            "final_result": state_snapshot.values.get("final_result"),
+            "current_agent": state_snapshot.values.get("current_agent"),
+            "requires_human_approval": state_snapshot.values.get("requires_human_approval", False),
+        }
+    except HTTPException:
+        raise
     except Exception as e:
-        log.error("Unexpected error in orchestration", error=str(e), exc_info=True)
+        log.error("Error retrieving task pending state", thread_id=thread_id, error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/tasks/{thread_id}/approve")
+async def approve_task(thread_id: str, request: ApproveRequest):
+    """
+    Handles a human-in-the-loop decision for an interrupted graph task.
+    - 'approve': Resumes the graph from the interrupt point to complete execution.
+    - 'reject': Overrides the state to mark as rejected and stops execution.
+    """
+    try:
+        if request.decision not in ("approve", "reject"):
+            raise HTTPException(status_code=400, detail="Decision must be 'approve' or 'reject'")
+
+        graph = get_compiled_graph()
+        config = {"configurable": {"thread_id": thread_id}}
+        state_snapshot = await graph.aget_state(config)
+
+        if not state_snapshot or not state_snapshot.values:
+            raise HTTPException(status_code=404, detail=f"Task thread '{thread_id}' not found")
+
+        is_pending = "human_approval" in (state_snapshot.next or ())
+        if not is_pending:
+            log.warning("Attempted approval on non-pending task", thread_id=thread_id)
+
+        log.info(
+            "Human approval decision received",
+            thread_id=thread_id,
+            decision=request.decision,
+            note=request.note,
+        )
+
+        if request.decision == "approve":
+            # Resume execution from the interrupt point
+            resumed_result = await graph.ainvoke(None, config=config)
+            log.info("Task graph successfully resumed after human approval", thread_id=thread_id)
+
+            return {
+                "thread_id": thread_id,
+                "status": "approved",
+                "decision": "approve",
+                "note": request.note,
+                "current_agent": resumed_result.get("current_agent", "human_approval"),
+                "final_result": resumed_result.get("final_result"),
+                "requires_human_approval": False,
+            }
+        else:
+            # Reject: Override state without executing downstream destructive action
+            original_risk = state_snapshot.values.get("final_result")
+            override_result = {
+                "status": "rejected_by_human",
+                "decision": "reject",
+                "note": request.note,
+                "original_risk": original_risk,
+            }
+            await graph.aupdate_state(
+                config,
+                {
+                    "final_result": override_result,
+                    "requires_human_approval": False,
+                    "current_agent": "human_approval_rejected",
+                },
+                as_node="human_approval",
+            )
+            log.info("Task marked as rejected by human override", thread_id=thread_id, note=request.note)
+
+            return {
+                "thread_id": thread_id,
+                "status": "rejected_by_human",
+                "decision": "reject",
+                "note": request.note,
+                "current_agent": "human_approval_rejected",
+                "final_result": override_result,
+                "requires_human_approval": False,
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error("Error processing approval decision", thread_id=thread_id, error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
 

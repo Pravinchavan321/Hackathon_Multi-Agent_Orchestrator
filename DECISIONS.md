@@ -68,6 +68,14 @@ over Google Generative AI remote embeddings (`GoogleGenerativeAIEmbeddings`).
 2. Latency: Sub-millisecond vector inference on queries vs 200-500ms network round-trips for remote embedding endpoints.
 3. Quality: 384-dimensional dense embeddings are purpose-tuned for sentence/paragraph semantic similarity (project descriptions and skill bios).
 
+### 2026-08-22 — Human-in-the-Loop: Rejection via State Update instead of Resumption
+When a human reviewer rejects a pending high-risk flag (`POST /api/ai/tasks/{thread_id}/approve` with `decision: "reject"`),
+we use `graph.aupdate_state()` to update the snapshot with `status: "rejected_by_human"` and do NOT resume the graph via `ainvoke(None)`.
+**Reasoning:**
+1. Prevention of False Positive Actions: Resuming an interrupted graph (`ainvoke(None)`) executes downstream nodes (such as disqualification or mass-notification). A rejected risk finding indicates the alert was a false positive or dismissed by the organizer and must NOT trigger downstream enforcement.
+2. Clean Termination: Updating state at the interrupt gate resolves the pending state (`pending_approval == False`) while permanently preserving both the reviewer's rationale and the original risk assessment in the MongoDB checkpoint log for auditability.
+
 <!-- Add new entries below this line, newest at the bottom -->
+
 
 
