@@ -4,10 +4,10 @@
 > The "In progress" section is what a new session should read FIRST.
 
 ## Last updated
-2026-08-22 — Phase 5 complete (Multi-agent conditional routing with 4 genuine LangGraph nodes: orchestrator, submission_agent, risk_agent, team_agent, all utilizing structured Pydantic outputs and verified).
+2026-08-22 — Phase 6 complete (ChromaDB tools wired into Submission Agent and Team Agent, seed script with 16 submissions & 10 participants, semantic search and end-to-end node execution verified).
 
 ## Last verified working state
-LangGraph StateGraph with dynamic conditional routing (`orchestrator` -> `route_to_agent` -> `submission_agent` | `risk_agent` | `team_agent` -> `END`) compiled with `MongoDBSaver`. Routing verification test (`backend/tests/test_routing.py`) and persistence check passed with 100% success on `gemini-flash-lite-latest`.
+LangGraph StateGraph with dynamic conditional routing (`orchestrator` -> `submission_agent` | `risk_agent` | `team_agent` | `unclear` -> `END`) with ChromaDB semantic vector search tools (`find_similar_submissions`, `find_matching_participants`) active in submission and team agents. All 4 checks in `test_semantic_search.py`, `test_routing.py` (4/4 passed), and `test_graph_checkpoint.py` passed with 100% success.
 
 ---
 
@@ -19,23 +19,23 @@ LangGraph StateGraph with dynamic conditional routing (`orchestrator` -> `route_
 - [x] 2-node LangGraph with Mongo checkpointing (prove persistence works)
 - [x] WebSocket transport layer verified (lifecycle, intervals, cleanup)
 - [x] Phase 5: Multi-agent conditional routing LangGraph with 4 nodes (orchestrator, submission_agent, risk_agent, team_agent) + structured Pydantic outputs
+- [x] Phase 6: Seed script (16 realistic submissions with overlapping concepts, 10 participants with varied skill bios)
+- [x] Phase 6: ChromaDB tools (`index_submission`, `find_similar_submissions`, `index_participant_skills`, `find_matching_participants`) using local SentenceTransformer embeddings
+- [x] Phase 6: Specialist agents integrated with semantic vector retrieval (`novelty_assessment`, `similar_submissions`, `matched_participants`)
 
 ## 🚧 In progress (READ THIS BEFORE CONTINUING)
-- Phase 6: Tools & ChromaDB integration
-  - Seed script: fake submissions & users
-  - Tools wired into specialist agents (submission analysis, risk detection, team matching)
-  - ChromaDB semantic search integration
+- Phase 7: Human-in-the-loop interrupt on destructive risk action
+  - Wire `human_approval_node` with `interrupt_before`
+  - Implement approval/rejection endpoints: `POST /api/ai/tasks/{task_id}/approve`
 
 ## ⬜ Not started
-- [ ] Tools wired (submission analysis, risk detection, team matching)
-- [ ] ChromaDB seeded + semantic search verified
 - [ ] Human-in-the-loop interrupt on destructive action (Phase 7)
 - [ ] LangSmith tracing enabled
 - [ ] structlog wired into all agent nodes
-- [ ] Seed script: 15-20 fake submissions, 10 fake users
 - [ ] Frontend: AIOrchestrator input + live AIActivityTimeline
 - [ ] Architecture diagram exported (1 page)
 - [ ] Failure log written (ongoing — add entries as things break)
+
 
 ---
 
@@ -194,14 +194,107 @@ $ python -m backend.tests.test_routing
          reasoning: The user input is a standard generic greeting ('Hello! What's up?') and does not describe a project submission, a hackathon integrity risk, or team composition needs. Therefore, it must be classified as unclear.
     [PASS] Successfully routed to orchestrator with valid structured result.
 
-======================================================================
-  ALL 4 ROUTING TESTS PASSED SUCCESSFULLY!
-======================================================================
+### Checkpoint 6: ChromaDB Tools & Semantic Vector Search (Phase 6)
+```
+$ python -m backend.tests.test_semantic_search
+
+===========================================================================
+  PHASE 6: CHROMADB TOOLS & SEMANTIC SEARCH VERIFICATION
+===========================================================================
+
+--- [CHECK 1: Database Seeding] ---
+============================================================
+  SEEDING CHROMADB VECTOR DATABASE
+============================================================
+  [+] Indexed Submission: 'StudyPal AI' (ID: sub-bbef7ad6)
+  [+] Indexed Submission: 'CogniLearn' (ID: sub-c6791ddd)
+  [+] Indexed Submission: 'NoteGenius' (ID: sub-bfe1a292)
+  [+] Indexed Submission: 'DeFi Sentinel' (ID: sub-51d6bc71)
+  [+] Indexed Submission: 'PoolGuard' (ID: sub-0d4a6ff8)
+  [+] Indexed Submission: 'HealthPulse' (ID: sub-245302b7)
+  [+] Indexed Submission: 'CareFlow AI' (ID: sub-25399a98)
+  [+] Indexed Submission: 'CodeCraft' (ID: sub-2846776a)
+  [+] Indexed Submission: 'GitSentinel' (ID: sub-8bb982a3)
+  [+] Indexed Submission: 'EcoTrack' (ID: sub-b0595402)
+  [+] Indexed Submission: 'GreenChain' (ID: sub-e9f5c7fe)
+  [+] Indexed Submission: 'LegalEagle' (ID: sub-8207efa3)
+  [+] Indexed Submission: 'JurisAI' (ID: sub-0c53e513)
+  [+] Indexed Submission: 'GameForge' (ID: sub-39dd88ad)
+  [+] Indexed Submission: 'CyberShield' (ID: sub-d7df133c)
+  [+] Indexed Submission: 'AgriDrone AI' (ID: sub-8380cc5a)
+  [+] Indexed Participant: 'Alice Chen' (ID: user-ab2eec2b)
+  [+] Indexed Participant: 'Bob Martinez' (ID: user-1ec4cd90)
+  [+] Indexed Participant: 'Carol Zhang' (ID: user-8f9900ce)
+  [+] Indexed Participant: 'David Kim' (ID: user-0fc0d574)
+  [+] Indexed Participant: 'Elena Rostova' (ID: user-32000fd6)
+  [+] Indexed Participant: 'Frank Owusu' (ID: user-84c5a560)
+  [+] Indexed Participant: 'Grace Hopper-Liu' (ID: user-7a37f750)
+  [+] Indexed Participant: 'Hassan Al-Mansoor' (ID: user-f4e082b5)
+  [+] Indexed Participant: 'Isabella Torres' (ID: user-678b73b6)
+  [+] Indexed Participant: 'Jack Robinson' (ID: user-d5d061b6)
+============================================================
+  SEED SUMMARY: 16 submissions, 10 participants indexed successfully.
+============================================================
+  [PASS] Seeding verified.
+
+--- [CHECK 2: Semantic Similarity Search over Submissions] ---
+  Search Query: "A student revision assistant that digests university slide decks and notes, automatically generating practice quizzes, review flashcards, and exam preparation summaries."
+  Top 3 Semantic Matches:
+    1. 'NoteGenius' | Similarity Score: 0.5476 | Distance: 0.826
+       Description snippet: Autonomous lecture notes organizer that turns audio recordings into structured study guide...
+    2. 'StudyPal AI' | Similarity Score: 0.5445 | Distance: 0.8365
+       Description snippet: An AI-powered study companion that generates personalized flashcards, active-recall quizze...
+    3. 'CogniLearn' | Similarity Score: 0.5289 | Distance: 0.8906
+       Description snippet: Intelligent learning platform with automated exam preparation, spaced repetition algorithm...
+  [PASS] Semantic search succeeded! Detected related projects: ['NoteGenius', 'CogniLearn', 'StudyPal AI'] (without keyword match).
+
+--- [CHECK 3: Semantic Participant Skill Matching] ---
+  Requirement: "We are seeking a frontend web developer skilled in React, TypeScript, and modern UI styling."
+  Top 3 Matched Participants:
+    1. 'Alice Chen' | Match Score: 0.5435 | Distance: 0.84
+       Bio: Full-stack engineer specializing in React, Next.js, TypeScript, Tailwind CSS, and Figma pr...
+    2. 'Grace Hopper-Liu' | Match Score: 0.4963 | Distance: 1.0151
+       Bio: Full-stack mobile & web developer proficient in React Native, Flutter, TypeScript, GraphQL...
+    3. 'Elena Rostova' | Match Score: 0.4553 | Distance: 1.1966
+       Bio: UI/UX designer and design systems lead proficient in Figma, user research, wireframing, vi...
+  [PASS] Participant matching succeeded! Top match: 'Alice Chen'.
+
+--- [CHECK 4: Full Node Execution with Semantic Tools] ---
+
+  [4A] Running Submission Agent Node End-to-End...
+    -> Submission Agent Final Structured Result:
+         Summary: FlashRecall AI is an educational application that processes recorded classes and PDF slides to automatically generate spaced repetition flashcards and practice tests for students. It streamlines study material creation by leveraging multi-modal inputs for automated test prep.
+         Innovation Score: 5.0/10
+         Technical Score: 6.5/10
+         Completeness Score: 6.0/10
+         Novelty Assessment: FlashRecall AI exhibits low to moderate originality. The core concept of transforming audio recordings and PDFs into flashcards and quizzes using AI is nearly identical to existing submissions like StudyPal AI and NoteGenius, while incorporating similar spaced repetition concepts seen in CogniLearn. To stand out, it would need a unique pedagogical approach, advanced adaptive scheduling algorithms, or proprietary multi-modal synthesis.
+         Similar Submissions Found (3 items):
+           - 'StudyPal AI' (Similarity: 0.5666)
+           - 'NoteGenius' (Similarity: 0.5426)
+           - 'CogniLearn' (Similarity: 0.4928)
+    [PASS] Submission agent node successfully incorporated ChromaDB prior art into novelty assessment.
+
+  [4B] Running Team Agent Node End-to-End...
+    -> Team Agent Final Structured Result:
+         Recommendation Summary: The team requires a frontend engineer proficient in React and Next.js to build the DEX aggregator interface. Alice Chen is the top candidate due to her strong background in React, Next.js, and TypeScript.
+         Missing Skills: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS', 'Web3 UI Integration']
+         Suggested Roles: ['Frontend Engineer', 'UI/UX Developer']
+         Compatibility Reasoning: Since the team already possesses strong Solidity smart contract capabilities, they lack the frontend expertise to build a user-facing decentralized trading platform. Alice Chen matches this exact need with her professional specialization in React, Next.js, and TypeScript, enabling a seamless integration between the smart contracts and the web interface.
+         Matched Participants (3 items):
+           - 'Alice Chen' (Match Score: 0.4431)
+           - 'Grace Hopper-Liu' (Match Score: 0.439)
+           - 'Bob Martinez' (Match Score: 0.4052)
+    [PASS] Team agent node successfully incorporated ChromaDB participant matches.
+
+===========================================================================
+  ALL 4 PHASE 6 SEMANTIC SEARCH & TOOL CHECKS PASSED SUCCESSFULLY!
+===========================================================================
 ```
 
 ---
 
 ## Failure log
+
 
 | Date | Issue | Root Cause | Fix |
 |------|-------|-----------|-----|

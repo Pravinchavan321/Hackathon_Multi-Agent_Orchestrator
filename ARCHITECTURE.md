@@ -78,7 +78,24 @@ directly to `END` with a clarification payload in `final_result`.
 
 
 
+## Specialist Agent Tools (ChromaDB Vector Integration)
+
+### Submission Agent Tools (`backend/ai/tools/submission_tools.py`)
+- `index_submission(submission_id, title, description)`: Upserts project submission into `submissions` collection.
+- `find_similar_submissions(description, n_results=5)`: Semantic vector similarity search over existing submissions. Powers `novelty_assessment` and prior art detection.
+
+### Team Agent Tools (`backend/ai/tools/team_tools.py`)
+- `index_participant_skills(user_id, name, skills_bio)`: Upserts participant skills bio into `participant_skills` collection.
+- `find_matching_participants(needed_skills_description, n_results=5)`: Semantic search over participant profiles to find teammates matching identified skill gaps.
+
+## Structured Output Schemas Flowing through `final_result`
+
+- **Submission Agent**: `{innovation_score, technical_score, completeness_score, summary, strengths, weaknesses, similar_submissions, novelty_assessment}`
+- **Risk Agent**: `{risk_level, category, description, evidence}`
+- **Team Agent**: `{recommendation_summary, missing_skills, suggested_roles, compatibility_reasoning, matched_participants}`
+
 ## Human-in-the-loop
+
 
 Any node that would perform a "destructive" action (mass message, publish
 result, reject a submission) sets `requires_human_approval = True` and the

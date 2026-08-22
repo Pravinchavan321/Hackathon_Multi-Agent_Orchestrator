@@ -11,7 +11,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
 from backend.core.logging import log
 from backend.db.mongo import connect_mongo, close_mongo
 from backend.db.redis_client import connect_redis, close_redis
-from backend.db.chroma_client import connect_chroma
+from backend.db.chroma_client import connect_chroma, get_or_create_collections
 from backend.routers import health_router, ai_router, ws_router
 
 @asynccontextmanager
@@ -28,8 +28,9 @@ async def lifespan(app: FastAPI):
         log.error("Redis startup failed, continuing without it.", error=str(e))
         
     try:
-        # Chroma is synchronous, we call it in startup
-        connect_chroma()
+        # Chroma is synchronous, connect and ensure collections exist
+        client = connect_chroma()
+        get_or_create_collections(client)
     except Exception as e:
         log.error("ChromaDB startup failed, continuing without it.", error=str(e))
         

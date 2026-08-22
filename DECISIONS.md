@@ -60,5 +60,14 @@ strictly mandates `unclear` if input does not explicitly match a specialist doma
 short-circuiting the graph directly to `END` with a clarification request rather than
 propagating unspecific context to specialist agents.
 
+### 2026-08-22 — Embedding Function: ChromaDB `DefaultEmbeddingFunction` (all-MiniLM-L6-v2)
+Chose ChromaDB's built-in local `DefaultEmbeddingFunction` (`all-MiniLM-L6-v2` via ONNX)
+over Google Generative AI remote embeddings (`GoogleGenerativeAIEmbeddings`).
+**Reasoning:**
+1. Zero API Quota & Billing Friction: Runs 100% locally offline, protecting against external rate limits/429 quotas.
+2. Latency: Sub-millisecond vector inference on queries vs 200-500ms network round-trips for remote embedding endpoints.
+3. Quality: 384-dimensional dense embeddings are purpose-tuned for sentence/paragraph semantic similarity (project descriptions and skill bios).
+
 <!-- Add new entries below this line, newest at the bottom -->
+
 
