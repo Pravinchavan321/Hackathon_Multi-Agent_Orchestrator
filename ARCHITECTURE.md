@@ -17,19 +17,19 @@ React (Vite + Tailwind)
    |            (backend/ai/graph/build_graph.py)
    |                     |
    |     +---------------+---------------+
-   |     |               |               |
-   |     v               v               v
-   | orchestrator_node  human_approval_node (interrupt_before)
+   |     |                               |
+   |     v                               v
+   | orchestrator_node             human_approval_node (Phase 7 interrupt_before)
    |     |
-   |     +--(conditional routing on task_type)--+
-   |     |          |            |               |
-   |     v          v            v               v
-   | organizer_  submission_  risk_agent_    team_agent_
-   | agent_node  agent_node   node           node
-   |     |          |            |               |
-   |     +----------+------------+---------------+
+   |     +--(conditional routing on task_type)---------+
+   |     |          |            |                     |
+   |     v          v            v                     v
+   | submission_  risk_agent_  team_agent_         END (if 'unclear')
+   | agent_node   node         node           (returns clarification request)
+   |     |          |            |
+   |     +----------+------------+
    |                     |
-   |             tool calls (backend/ai/tools/*.py)
+   |             tool calls (backend/ai/tools/*.py - Phase 6)
    |                     |
    |     +---------------+----------------+
    |     |               |                |
@@ -53,7 +53,7 @@ All logs go through `structlog` (`backend/core/logging.py`).
 ```python
 class HackathonAgentState(TypedDict):
     messages: Annotated[list, add_messages]
-    task_type: str                  # routes orchestrator -> specialist
+    task_type: str                  # routes orchestrator -> specialist | unclear
     hackathon_id: str | None
     current_agent: str
     tool_results: dict
@@ -62,16 +62,20 @@ class HackathonAgentState(TypedDict):
     final_result: dict | None
 ```
 
-## Routing logic (orchestrator_node -> specialist)
+## Routing logic (orchestrator_node -> specialist / short-circuit)
 
 | task_type | routes to | description |
 |---|---|---|
 | `submission` | `submission_agent` | Project evaluation, scoring (innovation, technical, completeness) |
 | `risk` | `risk_agent` | Anomaly detection, suspicious voting patterns, collusion, plagiarism |
 | `team` | `team_agent` | Skill gap analysis, teammate recommendations, role matching |
+| `unclear` | `END` (short-circuit) | Greetings, ambiguous or vague input; returns clarification guidance |
 
 `route_to_agent()` reads `state["task_type"]`, set by the orchestrator's
 structured output LLM call reasoning over the incoming goal — not a keyword match.
+If the input is vague or does not clearly map to a specialist domain, it routes
+directly to `END` with a clarification payload in `final_result`.
+
 
 
 ## Human-in-the-loop
